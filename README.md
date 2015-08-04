@@ -30,11 +30,15 @@ Quick:
 
 either:
 
+```
 make debug
+```
 
 or:
 
+```
 make release
+```
 
 # usage
 
