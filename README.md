@@ -20,7 +20,9 @@ the third party libraries.
 
 Quick:
 
+'''
 ./configure --ndk-path ~/Source/Android/android-ndk --sdk-path ~/Source/Android/android-sdk-linux --target-platform android-17 --bootstrap
+'''
 
 --bootstrap will download required third party libraries and cross compile them for Android.
 
@@ -33,3 +35,11 @@ make debug
 or:
 
 make release
+
+# usage
+
+Include libsvgandroid.so as a prebuilt shared library in your Android.mk file. Please refer to the
+Android NDK documentation for information about specifics.
+
+Include libsvgandroid.jar in your libs directory. Please refer to the Android SDK documentation for
+information about specifics.
