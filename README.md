@@ -1,6 +1,5 @@
 # libsvgandroid
-SVG render library for Android by Anton Persson
-Based on libsvg by Carl D. Worth.
+SVG render library for Android by Anton Persson. Based on libsvg by Carl D. Worth.
 
 # license
 libsvgandroid is released under the GNU Lesser General Public License, version 3 or later.
