@@ -5,7 +5,7 @@ PROJECT_NAMESPACE=com.toolkits.libsvgandroid
 
 function usage {
     echo
-    echo "Configure script for libsvgandroid"
+    echo "Configure script for $PROJECT_NAME"
     echo
     echo "usage:"
     echo
@@ -90,13 +90,39 @@ function do_expat {
     popd
 }
 
+function findsmallest {
+    local REQUESTED=`echo $TARGET_PLATFORM | cut -d '-' -f 2-`
+    local LIST=`ls $NDK_PATH/platforms/ | cut -d '-' -f 2- | sort`
+    local RESULT=0
+
+    for PLF in $LIST ; do
+	if [ $PLF -lt $REQUESTED ]; then
+	    local RESULT=$PLF
+	fi
+    done
+
+    echo "android-$RESULT"
+}
+
+function prepare_toolchain {
+    mkdir -p prereqs
+    pushd prereqs
+
+    local NDK_PLATFORM=$(findsmallest $TARGET_PLATFORM)
+    echo "Found nearest compatible NDK platform $NDK_PLATFORM (requested: $TARGET_PLATFORM)"
+
+    $NDK_PATH/build/tools/make-standalone-toolchain.sh --platform=$NDK_PLATFORM --toolchain=arm-linux-androideabi-4.9 --install-dir=$PWD/standalone-toolchain-4.9
+
+    popd
+}
+
 function do_bootstrap {
     rm -rf prereqs
 
-    mkdir prereqs
+    prepare_toolchain
+
     pushd prereqs
 
-    $NDK_PATH/build/tools/make-standalone-toolchain.sh --platform=$TARGET_PLATFORM --toolchain=arm-linux-androideabi-4.9 --install-dir=$PWD/standalone-toolchain-4.9
     export PATH=$PWD/standalone-toolchain-4.9/bin:$PATH
     export CC=arm-linux-androideabi-gcc
     export CXX=arm-linux-androideabi-g++
@@ -162,6 +188,18 @@ EOF
 
 BUILDDIR = build
 
+help:
+	@echo "Usage:"
+	@echo
+	@echo "make <target>"
+	@echo
+	@echo "Available targets:"
+	@echo
+	@echo "    help    : this text"
+	@echo "    release : make a release build"
+	@echo "    debug   : make a debug build"
+	@echo "    clean   : cleanup build"
+
 clean:
 	cd \$(BUILDDIR); \$(MAKE) clean
 	rm -rf export
@@ -180,10 +218,10 @@ export:
 	@find build/libs/ | grep \.so | cut -d / -f 3- | awk '{print "install -D build/libs/" \$\$0 " export/" \$\$0}' | bash
 
 release: releasebuild export
-	@echo "FINISHED"
+	@echo "releasebuild FINISHED"
 
 debug: debugbuild export
-	@echo "FINISHED"
+	@echo "debugbuild FINISHED"
 
 EOF
 }
@@ -236,6 +274,8 @@ if [ "$#" -eq 7 ]; then
     fi
 
     do_bootstrap
+else
+    prepare_toolchain
 fi
 
 do_init

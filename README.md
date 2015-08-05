@@ -20,7 +20,7 @@ the third party libraries.
 Quick:
 
 ```
-./configure --ndk-path ~/Source/Android/android-ndk --sdk-path ~/Source/Android/android-sdk-linux --target-platform android-17 --bootstrap
+./configure --ndk-path ~/Source/Android/android-ndk --sdk-path ~/Source/Android/android-sdk-linux --target-platform android-10 --bootstrap
 ```
 
 --bootstrap will download required third party libraries and cross compile them for Android.
