@@ -108,9 +108,6 @@ function prepare_toolchain {
     mkdir -p prereqs
     pushd prereqs
 
-    local NDK_PLATFORM=$(findsmallest $TARGET_PLATFORM)
-    echo "Found nearest compatible NDK platform $NDK_PLATFORM (requested: $TARGET_PLATFORM)"
-
     $NDK_PATH/build/tools/make-standalone-toolchain.sh --platform=$NDK_PLATFORM --toolchain=arm-linux-androideabi-4.9 --install-dir=$PWD/standalone-toolchain-4.9
 
     popd
@@ -171,7 +168,7 @@ clean:
 	rm -rf libs/arm*
 
 ndkbuild:
-	$NDK_PATH/ndk-build
+	$NDK_PATH/ndk-build TARGET_PLATFORM=$NDK_PLATFORM
 
 release: ndkbuild releasebuild
 	ant release
@@ -206,16 +203,18 @@ clean:
 
 releasebuild:
 	cd \$(BUILDDIR); \$(MAKE) release
+	@touch \$(BUILDDIR)/bin/classes.jar
 
 debugbuild:
 	cd \$(BUILDDIR); \$(MAKE) debug
+	@touch \$(BUILDDIR)/bin/classes.jar
 
-export:
+export: \$(BUILDDIR)/bin/classes.jar
 	@printf "\\n\\nExporting to ./export\\n\\n"
 	@mkdir -p export
 	@rm -rf export/*
-	@cp build/bin/classes.jar export/$PROJECT_NAME.jar
-	@find build/libs/ | grep \.so | cut -d / -f 3- | awk '{print "install -D build/libs/" \$\$0 " export/" \$\$0}' | bash
+	@cp \$(BUILDDIR)/bin/classes.jar export/$PROJECT_NAME.jar
+	@find \$(BUILDDIR)/libs/ | grep \.so | cut -d / -f 3- | awk '{print "install -D \$(BUILDDIR)/libs/" \$\$0 " export/" \$\$0}' | bash
 
 release: releasebuild export
 	@echo "releasebuild FINISHED"
@@ -265,6 +264,9 @@ fi
 NDK_PATH=$2
 SDK_PATH=$4
 TARGET_PLATFORM=$6
+
+NDK_PLATFORM=$(findsmallest $TARGET_PLATFORM)
+echo "Found nearest compatible NDK platform $NDK_PLATFORM (requested: $TARGET_PLATFORM)"
 
 if [ "$#" -eq 7 ]; then
     if [ "$7" != "--bootstrap" ]; then
