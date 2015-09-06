@@ -170,7 +170,7 @@ clean:
 ndkbuild:
 	$NDK_PATH/ndk-build TARGET_PLATFORM=$NDK_PLATFORM
 
-release: ndkbuild releasebuild
+release: ndkbuild
 	ant release
 
 debug: ndkbuild
