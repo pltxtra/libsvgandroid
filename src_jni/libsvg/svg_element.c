@@ -6,12 +6,12 @@
    modify it under the terms of the GNU Library General Public License as
    published by the Free Software Foundation; either version 2 of the
    License, or (at your option) any later version.
-  
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
    Library General Public License for more details.
-  
+
    You should have received a copy of the GNU Library General Public
    License along with this program; if not, write to the
    Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -45,7 +45,7 @@ _svg_element_create (svg_element_t	**element,
 	    free(*element);
 	    return SVG_STATUS_NO_MEMORY;
     }
-	
+
 
     return _svg_element_init (*element, type, parent, doc);
 }
@@ -67,7 +67,7 @@ _svg_element_init (svg_element_t	*element,
     element->next_event = NULL;
 
     element->b_header = 0xbeef;
-    
+
     status = _svg_transform_init (&element->transform);
     if (status)
 	return status;
@@ -77,7 +77,7 @@ _svg_element_init (svg_element_t	*element,
 	return status;
 
     element->overflow = SVG_OVERFLOW_VISIBLE;
-    
+
     switch (type) {
     case SVG_ELEMENT_TYPE_SVG_GROUP:
     case SVG_ELEMENT_TYPE_GROUP:
@@ -184,14 +184,14 @@ static void _svg_element_delete (svg_element_t *element)
 
 void _svg_element_reference(svg_element_t *element) {
 	element->ref_count++;
-}	
+}
 
 void _svg_element_dereference(svg_element_t *element) {
 	if(element->b_header != 0xbeef) {
 		SVG_ERROR("Element %p has a corrupted beef header (tid: %d).\n", element, gettid());
 		exit(-1);
 	}
-	
+
 	element->ref_count--;
 
 	SVG_DEBUG("_svg_element_dereference(%p) - new count: %d\n", element, element->ref_count);
@@ -240,7 +240,7 @@ svg_element_render (svg_element_t		*element,
 	    element->next_event = element->doc->event_stack;
 	    element->doc->event_stack = element;
     }
-        
+
     if (element->type == SVG_ELEMENT_TYPE_SVG_GROUP
 	|| element->type == SVG_ELEMENT_TYPE_GROUP) {
 
@@ -265,11 +265,11 @@ svg_element_render (svg_element_t		*element,
 							   &(element->e.group.y),
 							   &(element->e.group.width),
 							   &(element->e.group.height));
-			
+
 			break;
 		}
 	}
-	
+
     } else {
 	    if(element->type == SVG_ELEMENT_TYPE_PATH)
 		    status = (engine->begin_element) (closure, element->e.path.cache);
@@ -366,13 +366,13 @@ svg_element_render (svg_element_t		*element,
     if (status)
 	    fail_status = status;
 
-    
+
     (void) engine->get_last_bounding_box(closure, &(element->bounding_box));
 
 fail:
     if (element->type == SVG_ELEMENT_TYPE_SVG_GROUP
 	|| element->type == SVG_ELEMENT_TYPE_GROUP) {
-	
+
 	status = (engine->end_group) (closure, _svg_style_get_opacity(&element->style));
 	if (status && !return_status)
 	    return_status = status;
@@ -385,7 +385,7 @@ fail:
     if(fail_status) {
 	    return_status = fail_status;
     }
-    
+
     return return_status;
 }
 
@@ -398,11 +398,11 @@ void svg_element_debug_render_tree(svg_element_t *element)
 	svg_status_t status;
 
 	SVG_ERROR("svg_element_debug_render_tree(%p -> %s -- ref: %d)\n", element, element->id, element->ref_count);
-	
+
 	if (element->parent == NULL) {
 		SVG_ERROR("  --> element has no parent.\n");
 	}
-	
+
 	/* if the display property is not activated, we dont have to
 	   draw this element nor its children, so we can safely return here. */
 	status = _svg_style_get_display (&element->style);
@@ -470,7 +470,7 @@ void svg_element_debug_render_tree(svg_element_t *element)
 		}
 	} else {
 		SVG_ERROR("element visibility property disabled.\n");
-	}	
+	}
 }
 
 svg_status_t
@@ -590,7 +590,7 @@ void _svg_attribute_apply_class(svg_element_t *element, const char *_class_strin
 		free(element->classes);
 	}
 	char *class_string_head = strdup(_class_string); // only used temporary
-	
+
 	int k_max = count_segments(class_string_head, " \t");
 	if(k_max) {
 		element->classes = (char **)calloc(k_max + 1, sizeof(char *));
@@ -603,12 +603,12 @@ void _svg_attribute_apply_class(svg_element_t *element, const char *_class_strin
 			while(segment) {
 				element->classes[k++] = strdup(segment);
 				segment = strsep(&class_string, " \t");
-			} 
+			}
 		}
 	}
 
 	free(class_string_head);
-}	
+}
 
 svg_status_t
 _svg_element_apply_attributes (svg_element_t	*element,
@@ -631,15 +631,15 @@ _svg_element_apply_attributes (svg_element_t	*element,
 
     _svg_attribute_get_string (attributes, "overflow", &overflow, NULL);
     if (overflow) {
-	    if(strcmp("visible", overflow) == 0) 
+	    if(strcmp("visible", overflow) == 0)
 		    element->overflow = SVG_OVERFLOW_VISIBLE;
-	    if(strcmp("hidden", overflow) == 0) 
+	    if(strcmp("hidden", overflow) == 0)
 		    element->overflow = SVG_OVERFLOW_HIDDEN;
-	    if(strcmp("scroll", overflow) == 0) 
+	    if(strcmp("scroll", overflow) == 0)
 		    element->overflow = SVG_OVERFLOW_SCROLL;
-	    if(strcmp("auto", overflow) == 0) 
+	    if(strcmp("auto", overflow) == 0)
 		    element->overflow = SVG_OVERFLOW_AUTO;
-	    if(strcmp("inherit", overflow) == 0) 
+	    if(strcmp("inherit", overflow) == 0)
 		    element->overflow = SVG_OVERFLOW_INHERIT;
     }
 
@@ -738,24 +738,24 @@ svg_status_t _svg_element_init_copy (
 	if(other->classes) {
 		size_t kount = 1;
 		int l;
-		
+
 		for(l = 0; other->classes[l] != NULL; l++) {
 			kount++;
 		}
 
 		element->classes = (char **)calloc(kount, sizeof(char *));
-		
+
 		for(l = 0; other->classes[l] != NULL; l++) {
 			element->classes[l] = strdup(other->classes[l]);
 		}
 	}
-	
+
 	element->transform = other->transform;
-  
+
 	status = _svg_style_init_copy (&element->style, &other->style);
 	if (status)
 		return status;
-  
+
 	switch (other->type) {
 	case SVG_ELEMENT_TYPE_SVG_GROUP:
 	case SVG_ELEMENT_TYPE_GROUP:
@@ -795,7 +795,7 @@ svg_status_t _svg_element_init_copy (
 	}
 	if (status)
 		return status;
-  
+
 	return SVG_STATUS_SUCCESS;
 }
 
@@ -807,7 +807,7 @@ svg_status_t _svg_element_clone(
 	if (*element == NULL) {
 		return SVG_STATUS_NO_MEMORY;
 	}
-	
+
 	if(_svg_element_init_copy (new_id, *element, other) != SVG_STATUS_SUCCESS) {
 		free(*element);
 		return SVG_STATUS_INVALID_CALL;
@@ -815,10 +815,10 @@ svg_status_t _svg_element_clone(
 
 	if ((*element)->id)
 		_svg_store_element_by_id ((*element)->doc, *element);
-	
+
 	return  SVG_STATUS_SUCCESS;
 }
-  
+
 svg_status_t _svg_inject_clone(const char *new_id, svg_element_t *group, svg_element_t *element_to_clone) {
 	svg_element_t *clone;
 
@@ -832,10 +832,10 @@ svg_status_t _svg_inject_clone(const char *new_id, svg_element_t *group, svg_ele
 	// OK, all good so far.. proceed with cloning and injection
 	if(_svg_element_clone(new_id, &clone, element_to_clone) == SVG_STATUS_SUCCESS) {
 		SVG_DEBUG("   inject clone %p (%s) into group %p (clone ref count: %d, parent ref count: %d)\n", clone, new_id, group, clone->ref_count, group->ref_count);
-		
+
 		clone->parent = group;
 		_svg_group_add_element(&(group->e.group), clone);
-		
+
 		return SVG_STATUS_SUCCESS;
 	}
 

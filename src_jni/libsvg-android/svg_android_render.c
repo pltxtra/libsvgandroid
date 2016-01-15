@@ -46,7 +46,7 @@ int _svg_android_get_last_bounding_box(void *closure, svg_bounding_box_t *bbox) 
 	svg_android_t *svg_android = closure;
 
 //	SVG_ANDROID_DEBUG("       --- boundingbox: %s\n", svg_android->state->bounding_box.left == -1 ? "INVALID" : "VALID");
-	
+
 	*bbox = svg_android->state->bounding_box;
 	if(svg_android->state->bounding_box.left == -1)
 		return 0;
@@ -91,7 +91,7 @@ _svg_android_set_viewport_dimension (void *closure,
 
 		w = (double)(svg_android->fit_to_w);
 		h = (double)(svg_android->fit_to_h);
-		
+
 		xx = w / vwidth;
 		yy = h / vheight;
 
@@ -100,7 +100,7 @@ _svg_android_set_viewport_dimension (void *closure,
 		if(xx > yy) xx = yy;
 
 		svg_android->fit_to_scale = xx;
-		
+
 		x0 = (double)(svg_android->fit_to_x);
 		y0 = (double)(svg_android->fit_to_y);
 
@@ -108,7 +108,7 @@ _svg_android_set_viewport_dimension (void *closure,
 			ANDROID_MATRIX_CREATE(svg_android, xx, 0.0, 0.0, yy, x0, y0);
 
 		ANDROID_CANVAS_CONCAT_MATRIX(svg_android, svg_android->fit_to_MATRIX);
-		
+
 	} else svg_android->fit_to_scale = 1.0;
 
 	DEBUG_EXIT("set_viewpoert_dimension");
@@ -122,19 +122,19 @@ _svg_android_begin_group (void *closure, double opacity)
 	jobject offscreen_bitmap = NULL;
 
 	DEBUG_ENTRY("begin_group");
-	
+
 	ANDROID_SAVE(svg_android);
-	
+
 	if (opacity != 1.0) {
 		opacity *= 255;
 		jint opacity_i = opacity;
 		opacity_i = ((opacity_i & 0xff) << 24) & 0xffffffff;
-		
+
 		offscreen_bitmap = ANDROID_CREATE_BITMAP(svg_android,
 							 svg_android->state->viewport_width,
 							 svg_android->state->viewport_height);
 		ANDROID_FILL_BITMAP(svg_android, offscreen_bitmap, opacity_i);
-		
+
 		svg_android->state->offscreen_bitmap = offscreen_bitmap;
 	} else svg_android->state->offscreen_bitmap = NULL;
 
@@ -202,7 +202,7 @@ _svg_android_move_to (void *closure, double x, double y)
 	svg_android->state->last_x = x;
 	svg_android->state->last_y = y;
 	DEBUG_EXIT("move_to");
-	
+
 	return SVG_ANDROID_STATUS_SUCCESS;
 }
 
@@ -260,7 +260,7 @@ _svg_android_close_path (void *closure)
 
 	DEBUG_ENTRY("close_path");
 	ANDROID_PATH_CLOSE(svg_android);
-	svg_android->state->last_x = 0.0; // don't know if this is right, really... 
+	svg_android->state->last_x = 0.0; // don't know if this is right, really...
 	svg_android->state->last_y = 0.0;
 	DEBUG_EXIT("close_path");
 
@@ -329,7 +329,7 @@ _svg_android_set_fill_rule (void *closure, svg_fill_rule_t fill_rule)
 	}
 
 	svg_android->state->fill_rule = fill_rule;
-	
+
 	DEBUG_EXIT("set_fill_rule");
 	return SVG_ANDROID_STATUS_SUCCESS;
 }
@@ -435,19 +435,19 @@ _svg_android_set_stroke_dash_array (void *closure, double *dash, int num_dashes)
 			buf = (jfloat *)malloc(sizeof(jfloat) * max_k);
 			if(buf == NULL)
 				return SVG_STATUS_NO_MEMORY;
-			
+
 			farr = (*(svg_android->env))->NewFloatArray(svg_android->env, max_k);
-			
+
 			if (farr == NULL) {
 				free(buf);
 				return SVG_ANDROID_STATUS_NO_MEMORY; /* out of memory error thrown */
 			}
-			
+
 			for(k = 0; k < svg_android->state->num_dashes; k++) {
 				buf[k] = svg_android->state->dash[k];
 			}
 			for(; k < max_k; k++) buf[k] = 0.0;
-			
+
 			(*(svg_android->env))->SetFloatArrayRegion(svg_android->env, farr, 0, max_k, buf);
 
 			free(buf);
@@ -468,7 +468,7 @@ _svg_android_set_stroke_dash_offset (void *closure, svg_length_t *offset_len)
 {
 	svg_android_t *svg_android = closure;
 	double offset;
-	
+
 	DEBUG_ENTRY("set_stroke_dash_offset");
 
 	_svg_android_length_to_pixel (svg_android, offset_len, &offset);
@@ -490,19 +490,19 @@ _svg_android_set_stroke_dash_offset (void *closure, svg_length_t *offset_len)
 			buf = (jfloat *)malloc(sizeof(jfloat) * max_k);
 			if(buf == NULL)
 				return SVG_STATUS_NO_MEMORY;
-			
+
 			farr = (*(svg_android->env))->NewFloatArray(svg_android->env, max_k);
-			
+
 			if (farr == NULL) {
 				free(buf);
 				return SVG_ANDROID_STATUS_NO_MEMORY; /* out of memory error thrown */
 			}
-			
+
 			for(k = 0; k < svg_android->state->num_dashes; k++) {
 				buf[k] = svg_android->state->dash[k];
 			}
 			for(; k < max_k; k++) buf[k] = 0.0;
-			
+
 			(*(svg_android->env))->SetFloatArrayRegion(svg_android->env, farr, 0, max_k, buf);
 
 			free(buf);
@@ -513,7 +513,7 @@ _svg_android_set_stroke_dash_offset (void *closure, svg_length_t *offset_len)
 			svg_android->state->dash_offset);
 		ANDROID_PAINT_SET_EFFECT(svg_android, effect);
 	}
-	
+
 	DEBUG_EXIT("set_stroke_dash_offset");
 	return SVG_ANDROID_STATUS_SUCCESS;
 }
@@ -579,7 +579,7 @@ _svg_android_set_stroke_miter_limit (void *closure, double limit)
 
 	svg_android->state->miter_limit = limit;
 	DEBUG_EXIT("set_stroke_miter_limit");
-	
+
 	return SVG_ANDROID_STATUS_SUCCESS;
 }
 
@@ -615,7 +615,7 @@ _svg_android_set_stroke_width (void *closure, svg_length_t *width_len)
 
 	DEBUG_ENTRY("set_stroke_width");
 	_svg_android_length_to_pixel (svg_android, width_len, &width);
-	
+
 	svg_android->state->width_len.unit = width_len->unit;
 	svg_android->state->width_len.value = width_len->value;
 
@@ -649,7 +649,7 @@ _svg_android_apply_clip_box (void *closure,
 	DEBUG_ENTRY("apply_clip_box");
 
 	double x, y, width, height;
-	
+
 	_svg_android_length_to_pixel (svg_android, x_l, &x);
 	_svg_android_length_to_pixel (svg_android, y_l, &y);
 	_svg_android_length_to_pixel (svg_android, width_l, &width);
@@ -658,7 +658,7 @@ _svg_android_apply_clip_box (void *closure,
 	width += x; height += y;
 
 	SVG_ANDROID_DEBUG("clip box: %f, %f, %f, %f\n", x, y, width, height);
-	
+
 	ANDROID_CANVAS_CLIP_RECT(svg_android,
 				 (float)(x), (float)(y),
 				 (float)(width),
@@ -683,9 +683,9 @@ _svg_android_transform (void *closure,
 	ANDROID_MATRIX_INIT(svg_android, new_matrix, xx, yx, xy, yy, x0, y0);
 
 	ANDROID_CANVAS_CONCAT_MATRIX(svg_android, new_matrix);
-	
+
 	DEBUG_EXIT("transform");
-	
+
 	return SVG_ANDROID_STATUS_SUCCESS;
 }
 
@@ -730,18 +730,18 @@ _svg_android_render_path (void *closure, void **path_cache)
 	DEBUG_ENTRY("render_path");
 	fill_paint = &svg_android->state->fill_paint;
 	stroke_paint = &svg_android->state->stroke_paint;
-	
+
 	if (fill_paint->type) {
 		_svg_android_set_paint_and_opacity (svg_android, fill_paint,
 						    svg_android->state->fill_opacity,
 						    SVG_ANDROID_RENDER_TYPE_FILL);
-		
+
 		if((*(svg_android->env))->ExceptionOccurred(svg_android->env)) {
 			(*(svg_android->env))->ExceptionDescribe(svg_android->env);
 		}
-		
+
 		ANDROID_DRAW_PATH(svg_android,
-				  svg_android->state->path, svg_android->state->paint);		
+				  svg_android->state->path, svg_android->state->paint);
 		if((*(svg_android->env))->ExceptionOccurred(svg_android->env)) {
 			(*(svg_android->env))->ExceptionDescribe(svg_android->env);
 		}
@@ -761,7 +761,7 @@ _svg_android_render_path (void *closure, void **path_cache)
 		if(svgAndroidGetInternalBoundingBox(&bbox)) {
 			_svg_android_update_last_bounding_box(svg_android, &bbox);
 		}
-		
+
 	}
 
 	if(path_cache && (*path_cache == NULL)) {
@@ -772,7 +772,7 @@ _svg_android_render_path (void *closure, void **path_cache)
 	} else if(!path_cache) {
 		ANDROID_PATH_CLEAR(svg_android, svg_android->state->path);
 	}
-	
+
 	DEBUG_EXIT("render_path");
 	return SVG_ANDROID_STATUS_SUCCESS;
 }
@@ -795,7 +795,24 @@ _svg_android_render_ellipse (void *closure,
 	_svg_android_length_to_pixel (svg_android, rx_len, &rx);
 	_svg_android_length_to_pixel (svg_android, ry_len, &ry);
 
-	ANDROID_DRAW_ELLIPSE(svg_android, cx, cy, rx, ry);
+	svg_paint_t *fill_paint, *stroke_paint;
+
+	fill_paint = &svg_android->state->fill_paint;
+	stroke_paint = &svg_android->state->stroke_paint;
+
+	if (fill_paint->type) {
+		_svg_android_set_paint_and_opacity (svg_android, fill_paint,
+						    svg_android->state->fill_opacity,
+						    SVG_ANDROID_RENDER_TYPE_FILL);
+		ANDROID_DRAW_ELLIPSE(svg_android, cx, cy, rx, ry);
+	}
+
+	if (stroke_paint->type) {
+		_svg_android_set_paint_and_opacity (svg_android, stroke_paint,
+						    svg_android->state->stroke_opacity,
+						    SVG_ANDROID_RENDER_TYPE_STROKE);
+		ANDROID_DRAW_ELLIPSE(svg_android, cx, cy, rx, ry);
+	}
 
 	{
 		static svg_bounding_box_t bbox;
@@ -803,7 +820,7 @@ _svg_android_render_ellipse (void *closure,
 			_svg_android_update_last_bounding_box(svg_android, &bbox);
 		}
 	}
-	
+
 	DEBUG_EXIT("render_ellipse");
 	return SVG_ANDROID_STATUS_SUCCESS;
 }
@@ -820,7 +837,7 @@ _svg_android_render_rect (void *closure,
 	svg_android_t *svg_android = closure;
 
 	double x, y, width, height, rx, ry;
- 
+
 	DEBUG_ENTRY("render_rect");
 	_svg_android_length_to_pixel (svg_android, x_len, &x);
 	_svg_android_length_to_pixel (svg_android, y_len, &y);
@@ -828,7 +845,7 @@ _svg_android_render_rect (void *closure,
 	_svg_android_length_to_pixel (svg_android, height_len, &height);
 	_svg_android_length_to_pixel (svg_android, rx_len, &rx);
 	_svg_android_length_to_pixel (svg_android, ry_len, &ry);
- 
+
 	if (rx > width / 2.0)
 		rx = width / 2.0;
 	if (ry > height / 2.0)
@@ -851,7 +868,7 @@ _svg_android_render_rect (void *closure,
 		_svg_android_set_paint_and_opacity (svg_android, stroke_paint,
 						    svg_android->state->stroke_opacity,
 						    SVG_ANDROID_RENDER_TYPE_STROKE);
-		
+
 		ANDROID_DRAW_RECT(svg_android, x, y, width, height, rx, ry);
 	}
 
@@ -867,14 +884,14 @@ _svg_android_render_rect (void *closure,
 }
 
 // returns the length of a null terminated string, considering some characters are multi-byte encoded.
-size_t strlen_UTF8(const char *utf8) {	
+size_t strlen_UTF8(const char *utf8) {
 	size_t length = 0;
 
 	while(*utf8 != '\0') {
 		length++;
-		
+
 		int step = 0;
-	
+
 		// check for multi byte characters
 		if(((*utf8) & 0xe0) == 0xc0) {
 			// b110xxxxx => two byte encoded
@@ -917,14 +934,14 @@ _svg_android_render_text (void *closure,
 
 	_svg_android_length_to_pixel (svg_android, x_len, &x);
 	_svg_android_length_to_pixel (svg_android, y_len, &y);
-	
+
 	status = _svg_android_move_to (svg_android, x, y);
 	if (status)
 		return status;
 
 	ANDROID_TEXT_PATH(svg_android, utf8, x, y);
 	_svg_android_close_path (svg_android);
-	
+
 	if (fill_paint->type) {
 		_svg_android_set_paint_and_opacity (svg_android, fill_paint,
 						    svg_android->state->fill_opacity,
@@ -982,7 +999,7 @@ _svg_android_render_image (void		*closure,
 	ANDROID_MATRIX_SCALE(svg_android, matrix, width / data_width, height / data_height);
 
 	// and draw!
-	ANDROID_DRAW_BITMAP(svg_android, bitmap, matrix);	
+	ANDROID_DRAW_BITMAP(svg_android, bitmap, matrix);
 
 	ANDROID_RESTORE(svg_android);
 
@@ -1000,7 +1017,7 @@ _svg_android_push_state (svg_android_t     *svg_android,
 	{
 		if((svg_android->state = _svg_android_state_push (svg_android, NULL, path_cache)) == NULL)
 			return SVG_STATUS_NO_MEMORY;
-		
+
 		svg_android->state->viewport_width = svg_android->viewport_width;
 		svg_android->state->viewport_height = svg_android->viewport_height;
 	}
@@ -1017,7 +1034,7 @@ _svg_android_push_state (svg_android_t     *svg_android,
 		}
 		if((svg_android->state = _svg_android_state_push (svg_android, svg_android->state, path_cache)) == NULL)
 			return SVG_STATUS_NO_MEMORY;
-	}    
+	}
 
 	DEBUG_EXIT("push_state");
 	return SVG_STATUS_SUCCESS;
@@ -1026,7 +1043,7 @@ _svg_android_push_state (svg_android_t     *svg_android,
 svg_status_t
 _svg_android_pop_state (svg_android_t *svg_android)
 {
-	
+
 	DEBUG_ENTRY("pop_state");
 	svg_android->state = _svg_android_state_pop (svg_android->state);
 
@@ -1062,8 +1079,8 @@ _svg_android_apply_view_box (void *closure,
 	logic_width = view_box.box.width;
 	logic_height = view_box.box.height;
 
-	
-	
+
+
 	if (view_box.aspect_ratio == SVG_PRESERVE_ASPECT_RATIO_NONE)
 	{
 		ANDROID_MATRIX_SCALE(svg_android,svg_android->state->matrix,
@@ -1126,9 +1143,9 @@ _svg_android_apply_view_box (void *closure,
 }
 
 /* The ellipse and arc functions below are:
- 
+
    Copyright (C) 2000 Eazel, Inc.
-  
+
    Author: Raph Levien <raph@artofcode.com>
 
    This is adapted from svg-path in Gill.
@@ -1146,7 +1163,7 @@ _svg_path_arc_segment (svg_android_t *svg_android,
 	double th_half;
 
 	sin_th = sin (x_axis_rotation * (M_PI / 180.0));
-	cos_th = cos (x_axis_rotation * (M_PI / 180.0)); 
+	cos_th = cos (x_axis_rotation * (M_PI / 180.0));
 	/* inverse transform compared with rsvg_path_arc */
 	a00 = cos_th * rx;
 	a01 = -sin_th * ry;
@@ -1240,7 +1257,7 @@ _svg_android_arc_to (void		*closure,
 	y1 = a10 * x + a11 * y;
 	/* (x0, y0) is current point in transformed coordinate space.
 	   (x1, y1) is new point in transformed coordinate space.
-       
+
 	   The arc fits a unit-radius circle in this space.
 	*/
 	d = (x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0);
@@ -1251,10 +1268,10 @@ _svg_android_arc_to (void		*closure,
 	xc = 0.5 * (x0 + x1) - sfactor * (y1 - y0);
 	yc = 0.5 * (y0 + y1) + sfactor * (x1 - x0);
 	/* (xc, yc) is center of the circle. */
-    
+
 	th0 = atan2 (y0 - yc, x0 - xc);
 	th1 = atan2 (y1 - yc, x1 - xc);
-    
+
 	th_arc = th1 - th0;
 	if (th_arc < 0 && sweep_flag)
 		th_arc += 2 * M_PI;
@@ -1268,7 +1285,7 @@ _svg_android_arc_to (void		*closure,
 	   bounds of the error from the following computation of
 	   n_segs. Plus the "+ 0.001" looks just plain fishy. -cworth */
 	n_segs = ceil (fabs (th_arc / (M_PI * 0.5 + 0.001)));
-    
+
 	for (i = 0; i < n_segs; i++) {
 		_svg_path_arc_segment (svg_android, xc, yc,
 				       th0 + i * th_arc / n_segs,
@@ -1279,5 +1296,3 @@ _svg_android_arc_to (void		*closure,
 	DEBUG_EXIT("arc_to");
 	return SVG_ANDROID_STATUS_SUCCESS;
 }
-
-
