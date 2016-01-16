@@ -21,6 +21,8 @@
 */
 
 #include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "svgint.h"
 
