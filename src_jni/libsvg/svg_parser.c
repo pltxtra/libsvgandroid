@@ -27,6 +27,7 @@
 #include <string.h>
 
 #include "svgint.h"
+#include "svg_parser.h"
 
 static svg_status_t
 _svg_parser_push_state (svg_parser_t		*parser,
@@ -34,19 +35,6 @@ _svg_parser_push_state (svg_parser_t		*parser,
 
 static svg_status_t
 _svg_parser_pop_state (svg_parser_t *parser);
-
-static svg_status_t
-_svg_parser_new_group_element (svg_parser_t *parser,
-			       svg_element_t **group_element,
-			       svg_element_type_t type);
-
-static svg_status_t
-_svg_parser_new_svg_group_element (svg_parser_t *parser, svg_element_t **group_element);
-
-static svg_status_t
-_svg_parser_new_leaf_element (svg_parser_t *parser,
-			      svg_element_t **child_element,
-			      svg_element_type_t type);
 
 static svg_status_t
 _svg_parser_parse_anchor (svg_parser_t	*parser,
@@ -174,6 +162,24 @@ static const svg_parser_map_t SVG_PARSER_MAP[] = {
     {"radialGradient",	{_svg_parser_parse_radial_gradient,	NULL }},
     {"stop",		{_svg_parser_parse_gradient_stop,	NULL }},
     {"pattern",		{_svg_parser_parse_pattern,		NULL }},
+
+    {"filter",			{_svg_parser_parse_filter,		NULL }},
+    {"feBlend",			{_svg_parser_parse_feBlend,		NULL }},
+    {"feColorMatrix",		{_svg_parser_parse_feColorMatrix,	NULL }},
+    {"feComponentTransfer",	{_svg_parser_parse_feComponentTransfer, NULL }},
+    {"feComposite",		{_svg_parser_parse_feComposite,		NULL }},
+    {"feConvolveMatrix",	{_svg_parser_parse_feConvolveMatrix,	NULL }},
+    {"feDiffuseLighting",	{_svg_parser_parse_feDiffuseLighting,	NULL }},
+    {"feDisplacementMap",	{_svg_parser_parse_feDisplacementMap,	NULL }},
+    {"feFlood",			{_svg_parser_parse_feFlood,		NULL }},
+    {"feGaussianBlur",		{_svg_parser_parse_feGaussianBlur,	NULL }},
+    {"feImage",			{_svg_parser_parse_feImage,		NULL }},
+    {"feMerge",			{_svg_parser_parse_feMerge,		NULL }},
+    {"feMorphology",		{_svg_parser_parse_feMorphology,	NULL }},
+    {"feOffset",		{_svg_parser_parse_feOffset,		NULL }},
+    {"feSpecularLighting",     	{_svg_parser_parse_feSpecularLightning, NULL }},
+    {"feTile",			{_svg_parser_parse_feTile,		NULL }},
+    {"feTurbulence",		{_svg_parser_parse_feTurbulence,	NULL }},
 };
 
 void
@@ -297,7 +303,7 @@ svg_status_t
 _svg_parser_spoof_state(svg_parser_t *parser, svg_element_t *parent) {
 	const svg_parser_cb_t *cb = NULL;
 	const char *this_id = NULL;
-	
+
 	if(parent->type == SVG_ELEMENT_TYPE_SVG_GROUP) {
 		this_id = "svg";
 	} else if(parent->type == SVG_ELEMENT_TYPE_GROUP) {
@@ -373,7 +379,7 @@ _svg_parser_pop_state (svg_parser_t *parser)
     return SVG_STATUS_SUCCESS;
 }
 
-static svg_status_t
+svg_status_t
 _svg_parser_new_svg_group_element (svg_parser_t *parser, svg_element_t **group_element)
 {
     svg_status_t status;
@@ -401,7 +407,7 @@ _svg_parser_new_svg_group_element (svg_parser_t *parser, svg_element_t **group_e
     return status;
 }
 
-static svg_status_t
+svg_status_t
 _svg_parser_new_group_element (svg_parser_t *parser,
 			       svg_element_t **group_element,
 			       svg_element_type_t type)
@@ -419,7 +425,7 @@ _svg_parser_new_group_element (svg_parser_t *parser,
     return status;
 }
 
-static svg_status_t
+svg_status_t
 _svg_parser_new_leaf_element (svg_parser_t *parser,
 			      svg_element_t **child_element,
 			      svg_element_type_t type)
@@ -709,7 +715,7 @@ _svg_parser_parse_linear_gradient (svg_parser_t	*parser,
 					    SVG_ELEMENT_TYPE_GRADIENT);
     if (status)
 	return status;
-    
+
     _svg_gradient_set_type (&(*gradient_element)->e.gradient,
 			    SVG_GRADIENT_LINEAR);
 
@@ -782,7 +788,7 @@ _svg_parser_parse_gradient_stop (svg_parser_t	*parser,
        here, it would be cleaner to just have the stop be a standard
        child element. */
     _svg_gradient_add_stop (gradient, offset, &color, opacity);
-    
+
     /* XXX: Obviously, this is totally bogus and needs to change. */
     /* not quite unknown, just don't store the element and stop applying attributes */
     return SVGINT_STATUS_UNKNOWN_ELEMENT;

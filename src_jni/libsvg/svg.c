@@ -6,17 +6,17 @@
    modify it under the terms of the GNU Library General Public License as
    published by the Free Software Foundation; either version 2 of the
    License, or (at your option) any later version.
-  
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
    Library General Public License for more details.
-  
+
    You should have received a copy of the GNU Library General Public
    License along with this program; if not, write to the
    Free Software Foundation, Inc., 59 Temple Place - Suite 330,
    Boston, MA 02111-1307, USA.
-  
+
    Author: Carl Worth <cworth@isi.edu>
 */
 
@@ -69,7 +69,7 @@ _svg_init (svg_t *svg)
     svg->element_ids = StrHmapAlloc(100);
 
     svg->do_path_cache = 0;
-    
+
     return SVG_STATUS_SUCCESS;
 }
 
@@ -200,7 +200,7 @@ svg_parse_buffer_and_inject (svg_t *svg, svg_element_t *parent, const char *buf,
 
 	if((parent->type == SVG_ELEMENT_TYPE_SVG_GROUP) ||
 	   (parent->type == SVG_ELEMENT_TYPE_GROUP)) {
-	
+
 		status = _svg_parser_begin (&svg->parser);
 		if (status)
 			return status;
@@ -208,19 +208,19 @@ svg_parse_buffer_and_inject (svg_t *svg, svg_element_t *parent, const char *buf,
 		status = _svg_parser_spoof_state(&svg->parser, parent);
 		if(status)
 			return status;
-		
+
 		status = _svg_parser_parse_chunk (&svg->parser, buf, count);
 
 		status = _svg_parser_unspoof_state(&svg->parser);
-		
+
 		if (status)
 			return status;
-		
+
 		status = _svg_parser_end (&svg->parser);
 	} else {
 		status = SVG_STATUS_INVALID_CALL;
 	}
-		
+
 	return status;
 }
 
@@ -244,7 +244,7 @@ svg_drop_element(svg_t *svg, svg_element_t *element) {
 			SVG_ERROR("Trying to drop element where parent is not a proper group type. Parent pointing to corrupted memory? Element %p, ref count %d\n", element, element->ref_count);
 			exit(0);
 		}
-		SVG_DEBUG("svg_drop_element %p -> ref count before: %d\n", element, element->ref_count);	
+		SVG_DEBUG("svg_drop_element %p -> ref count before: %d\n", element, element->ref_count);
 		return _svg_group_drop_element(&(element->parent->e.group), element);
 	}
 
@@ -296,7 +296,7 @@ svg_event_coords_match(svg_t *svg, int x, int y) {
 	SVG_DEBUG("     no match.\n");
 	return NULL;
 }
-	
+
 svg_status_t
 svg_render (svg_t		*svg,
 	    svg_render_engine_t	*engine,
@@ -309,7 +309,7 @@ svg_render (svg_t		*svg,
 	return SVG_STATUS_SUCCESS;
 
     svg->event_stack = NULL; // reset the event stack
-    
+
     /* XXX: Currently, the SVG parser doesn't resolve relative URLs
        properly, so I'll just cheese things in by changing the current
        directory -- at least I'll be nice about it and restore it
@@ -317,7 +317,7 @@ svg_render (svg_t		*svg,
 
     getcwd (orig_dir, MAXPATHLEN);
     chdir (svg->dir_name);
-    
+
     status = svg_element_render (svg->group_element, engine, closure);
 
     chdir (orig_dir);
@@ -342,7 +342,7 @@ _svg_fetch_element_by_id (svg_t *svg, const char *id, svg_element_t **element_re
 		*element_ret = StrHmapFind(svg->element_ids, id);
 	} else {
 		// get root element
-		*element_ret = svg->group_element; 
+		*element_ret = svg->group_element;
 	}
 	return SVG_STATUS_SUCCESS;
 }
@@ -371,7 +371,7 @@ _svg_fetch_element_by_class (svg_t *svg, const char *class_id, svg_element_t *el
 						return SVG_STATUS_SUCCESS;
 					}
 				}
-				
+
 			}
 			if(_svg_fetch_element_by_class(svg, class_id, e, element_ret) == SVG_STATUS_SUCCESS) {
 				return SVG_STATUS_SUCCESS;
@@ -392,9 +392,10 @@ _svg_fetch_element_by_class (svg_t *svg, const char *class_id, svg_element_t *el
 	case SVG_ELEMENT_TYPE_GRADIENT_STOP:
 	case SVG_ELEMENT_TYPE_PATTERN:
 	case SVG_ELEMENT_TYPE_IMAGE:
+	case SVG_ELEMENT_TYPE_FILTER:
 		break;
 	}
-	
+
 	return SVG_STATUS_NO_SUCH_ELEMENT;
 }
 

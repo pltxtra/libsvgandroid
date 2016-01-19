@@ -103,6 +103,8 @@ LIBSVG_SOURCES = \
 	libsvg/svg_text.c \
 	libsvg/svg_transform.c \
 	libsvg/svg_version.h \
+	libsvg/svg_filter.c \
+	libsvg/svg_filter.h \
 	$(LIBSVG_EXTRA_SOURCES)
 
 # libsvg-android stuff

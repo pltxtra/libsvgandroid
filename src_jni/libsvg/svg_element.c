@@ -113,6 +113,9 @@ _svg_element_init (svg_element_t	*element,
     case SVG_ELEMENT_TYPE_PATTERN:
 	status = _svg_pattern_init (&element->e.pattern, parent, doc);
 	break;
+    case SVG_ELEMENT_TYPE_FILTER:
+	status = _svg_filter_init (&element->e.filter);
+	break;
     default:
 	status = SVGINT_STATUS_UNKNOWN_ELEMENT;
 	break;
@@ -359,6 +362,9 @@ svg_element_render (svg_element_t		*element,
 	    break; /* Patterns are applied as paint, not rendered directly */
 	case SVG_ELEMENT_TYPE_SYMBOL:
 	    status = _svg_symbol_render (element, engine, closure);
+	    break;
+	case SVG_ELEMENT_TYPE_FILTER:
+	    status = _svg_filter_render (&element->e.filter, engine, closure);
 	    break;
 	default:
 	    status = SVGINT_STATUS_UNKNOWN_ELEMENT;

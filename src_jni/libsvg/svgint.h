@@ -37,13 +37,14 @@ typedef XML_Parser svg_xml_parser_context_t;
 #include "svg_version.h"
 #include "svg.h"
 #include "svg_ascii.h"
+#include "svg_filter.h"
 
 #define container_of(ptr, type, member) ({ \
 	const typeof( ((type *)0)->member ) *__mptr = (ptr);  \
 	(type *)( (char *)__mptr - offsetof(type,member) );})
-	
+
 #define SVG_ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
-	
+
 /* sure wish C had a real enum so that this type would be
    distinguishable from svg_status_t. In the meantime, we'll use the
    otherwise bogus 1000 value. */
@@ -56,7 +57,7 @@ typedef svg_status_t svgint_status_t;
 		SVG_OVERFLOW_AUTO,
 		SVG_OVERFLOW_INHERIT
 	} svg_overflow_t;
-	
+
 typedef struct svg_pt {
     double x;
     double y;
@@ -88,7 +89,7 @@ typedef enum svg_path_cmd {
 /* Primitive path operators. All of the above svg_path_cmd_t commands
    are stored internally as a sequence of the following svg_path_op_t
    operators.
-   
+
    We synch up the numeric values of these two types as an added
    measure of safety since C doesn't have a real enum type.
 */
@@ -286,13 +287,14 @@ typedef enum svg_element_type {
     SVG_ELEMENT_TYPE_GRADIENT,
     SVG_ELEMENT_TYPE_GRADIENT_STOP,
     SVG_ELEMENT_TYPE_PATTERN,
-    SVG_ELEMENT_TYPE_IMAGE
+    SVG_ELEMENT_TYPE_IMAGE,
+    SVG_ELEMENT_TYPE_FILTER
 } svg_element_type_t;
 
 struct svg_element {
 
 	uint32_t b_header; /* aka "beef" header - it's set during creation of the element to a magic number, this will be checked at certain points to determine if the header has been corrupted. This indicates a serious bug somewhere. */
-	
+
     struct svg_element *parent;
 
     svg_t *doc;
@@ -301,13 +303,13 @@ struct svg_element {
     svg_transform_t transform;
 	svg_style_t style;
 	char **classes;
-	
+
 	svg_bounding_box_t bounding_box;
     svg_element_type_t type;
 
 	int ref_count, do_events;
 	struct svg_element *next_event;
-	
+
     char *id;
 
 	void *path_cache;
@@ -324,6 +326,7 @@ struct svg_element {
 	svg_gradient_t gradient;
 	svg_gradient_stop_t gradient_stop;
 	svg_pattern_t pattern;
+	svg_filter_t filter;
     } e;
 };
 
@@ -345,6 +348,7 @@ typedef struct svg_parser_cb {
 typedef struct svg_parser_state {
     const svg_parser_cb_t	*cb;
     svg_element_t		*group_element;
+    svg_element_t		*filter_element;
     svg_text_t			*text;
 
     struct svg_parser_state	*next;
@@ -456,7 +460,7 @@ svg_status_t _svg_element_init_copy (const char *new_id, svg_element_t   *elemen
 svg_status_t _svg_inject_clone(const char *new_id, svg_element_t *group, svg_element_t *element_to_clone);
 
 void _svg_element_get_viewport(svg_element_t *element, double *x, double *y, double *w, double *h);
-	
+
 svgint_status_t _svg_element_clone (const char *new_id,
 				    svg_element_t       **element,
 				    svg_element_t       *other);
@@ -467,7 +471,7 @@ _svg_element_apply_attributes (svg_element_t	*group_element,
 
 void _svg_element_set_display(svg_element_t *element, const char *value);
 void _svg_element_set_style(svg_element_t *element, const char *value);
-	
+
 svg_status_t
 _svg_element_parse_aspect_ratio (const char *aspect_ratio_str,
 				 svg_view_box_t *view_box);
@@ -524,7 +528,7 @@ _svg_group_add_element (svg_group_t *group, svg_element_t *element);
 
 svg_status_t
 _svg_group_drop_element (svg_group_t *group, svg_element_t *element);
-	
+
 svg_status_t
 _svg_group_render (svg_group_t		*group,
 		   svg_render_engine_t	*engine,
@@ -839,7 +843,7 @@ _svg_style_parse_display (svg_style_t *style, const char *str);
 
 svg_status_t
 _svg_style_parse_style_str (svg_style_t	*style, const char *str);
-	
+
 svg_status_t
 _svg_style_deinit (svg_style_t *style);
 
@@ -849,7 +853,7 @@ _svg_style_render (svg_style_t		*style,
 		   void			*closure);
 
 svg_status_t
-_svg_style_apply_attributes (svg_style_t	*style, 
+_svg_style_apply_attributes (svg_style_t	*style,
 			     const char		**attributes);
 
 double
