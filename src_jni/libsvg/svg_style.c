@@ -1,22 +1,22 @@
 /* svg_style.c: Data structure for holding SVG style properties
- 
+
    Copyright © 2002 USC/Information Sciences Institute
-  
+
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public License as
    published by the Free Software Foundation; either version 2 of the
    License, or (at your option) any later version.
-  
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
    Library General Public License for more details.
-  
+
    You should have received a copy of the GNU Library General Public
    License along with this program; if not, write to the
    Free Software Foundation, Inc., 59 Temple Place - Suite 330,
    Boston, MA 02111-1307, USA.
-  
+
    Author: Carl Worth <cworth@isi.edu>
 */
 
@@ -39,6 +39,9 @@ _svg_style_parse_fill_paint (svg_style_t *style, const char *str);
 
 static svg_status_t
 _svg_style_parse_fill_rule (svg_style_t *style, const char *str);
+
+static svg_status_t
+_svg_style_parse_filter (svg_style_t *style, const char *str);
 
 static svg_status_t
 _svg_style_parse_font_family (svg_style_t *style, const char *str);
@@ -114,6 +117,7 @@ static const svg_style_parse_map_t SVG_STYLE_PARSE_MAP[] = {
     { "fill",			_svg_style_parse_fill_paint,		"black" },
     { "fill-rule",		_svg_style_parse_fill_rule,		"nonzero" },
 /* XXX: { "font",		_svg_style_parse_font,			NULL }, */
+    { "filter",			_svg_style_parse_filter,		"none" },
     { "font-family",		_svg_style_parse_font_family,		"sans-serif" },
     /* XXX: The default is supposed to be "medium" but I'm not parsing that yet */
     { "font-size",		_svg_style_parse_font_size,		"10.0" },
@@ -167,7 +171,8 @@ _svg_style_init_empty (svg_style_t *style, svg_t *svg)
     style->stroke_miter_limit = 4.0;
     style->stroke_opacity = 1.0;
     style->fill_opacity = 1.0;
-    
+    style->filter_element = NULL;
+
     /* opacity is not inherited */
     style->flags |= SVG_STYLE_FLAG_OPACITY;
     style->opacity = 1.0;
@@ -180,13 +185,13 @@ _svg_style_init_empty (svg_style_t *style, svg_t *svg)
 
 svg_status_t _svg_style_init_copy (svg_style_t *style, svg_style_t *other) {
 	style->svg = other->svg;
-	
+
 	style->flags = other->flags;
-	
+
 	style->fill_opacity = other->fill_opacity;
 	style->fill_paint = other->fill_paint;
 	style->fill_rule = other->fill_rule;
-	
+
 	if (other->font_family) {
 		style->font_family = strdup (other->font_family);
 		if (style->font_family == NULL)
@@ -194,13 +199,13 @@ svg_status_t _svg_style_init_copy (svg_style_t *style, svg_style_t *other) {
 	} else {
 		style->font_family = NULL;
 	}
-	
+
 	style->font_size = other->font_size;
 	style->font_style = other->font_style;
 	style->font_weight = other->font_weight;
-	
+
 	style->opacity = other->opacity;
-	
+
 	style->num_dashes = other->num_dashes;
 	if (style->num_dashes) {
 		style->stroke_dash_array = malloc (style->num_dashes * sizeof (double));
@@ -212,17 +217,17 @@ svg_status_t _svg_style_init_copy (svg_style_t *style, svg_style_t *other) {
 		style->stroke_dash_array = NULL;
 	}
 	style->stroke_dash_offset = other->stroke_dash_offset;
-	
+
 	style->stroke_line_cap = other->stroke_line_cap;
 	style->stroke_line_join = other->stroke_line_join;
 	style->stroke_miter_limit = other->stroke_miter_limit;
 	style->stroke_opacity = other->stroke_opacity;
 	style->stroke_paint = other->stroke_paint;
 	style->stroke_width = other->stroke_width;
-	
+
 	style->color = other->color;
 	style->text_anchor = other->text_anchor;
-	
+
 	return SVG_STATUS_SUCCESS;
 }
 
@@ -259,7 +264,7 @@ _svg_style_deinit (svg_style_t *style)
 	free (style->stroke_dash_array);
     style->stroke_dash_array = NULL;
     style->num_dashes = 0;
-    
+
     style->flags = SVG_STYLE_FLAG_NONE;
 
     return SVG_STATUS_SUCCESS;
@@ -270,15 +275,15 @@ _svg_style_str_to_opacity (const char *str, double *ret)
 {
     const char *end_ptr;
     double opacity;
-    
+
     opacity = _svg_ascii_strtod (str, &end_ptr);
 
     if (end_ptr == str)
 	return SVG_STATUS_PARSE_ERROR;
-    
+
     if (end_ptr && end_ptr[0] == '%')
 	opacity *= 0.01;
-    
+
     *ret = opacity;
 
     return SVG_STATUS_SUCCESS;
@@ -343,6 +348,24 @@ _svg_style_parse_fill_rule (svg_style_t *style, const char *str)
     style->flags |= SVG_STYLE_FLAG_FILL_RULE;
 
     return SVG_STATUS_SUCCESS;
+}
+
+static svg_status_t
+_svg_style_parse_filter (svg_style_t *style, const char *str)
+{
+    svg_status_t stat = SVG_STATUS_SUCCESS;
+
+    if(strcmp ("none", str) == 0)
+	return SVG_STATUS_SUCCESS;
+
+    style->flags |= SVG_STYLE_FLAG_FILTER;
+
+    if(strcmp ("inherit", str) == 0)
+	style->filter_element = NULL;
+    else
+	stat = _svg_fetch_element_by_id (style->svg, str, &style->filter_element);
+
+    return stat;
 }
 
 static svg_status_t
@@ -436,7 +459,7 @@ _svg_style_parse_stroke_dash_array (svg_style_t *style, const char *str)
     int i, j;
 
     free (style->stroke_dash_array);
-    style->num_dashes = 0; 
+    style->num_dashes = 0;
 
     if(strcmp (str, "none") == 0) {
 	style->flags |= SVG_STYLE_FLAG_STROKE_DASH_ARRAY;
@@ -682,7 +705,7 @@ _svg_style_split_nv_pair (char	*nv_pair,
 	    *value = NULL;
 	    return SVG_STATUS_NO_MEMORY;
     }
-    
+
     *value = colon;
 
     return SVG_STATUS_SUCCESS;
@@ -711,7 +734,7 @@ _svg_style_parse_nv_pair (svg_style_t	*style,
 	    break;
 	}
     }
-    
+
     return status;
 }
 
@@ -724,7 +747,7 @@ _svg_style_parse_nv_pair (svg_style_t	*style,
    Copyright © 2000 Eazel, Inc.
    Copyright © 2002 Dom Lachowicz <cinamod@hotmail.com>
    Copyright © 2002 USC/Information Sciences Institute
-  
+
    Author: Raph Levien <raph@artofcode.com>
 */
 /* Parse a complete CSS2 style string into individual name/value
@@ -752,7 +775,7 @@ _svg_style_parse_style_str (svg_style_t	*style,
 	    // skip leading whitespace
 	    while (_svg_ascii_isspace (*next_token))
 		    next_token++;
-	    
+
 	    nv_pair = next_token;
 	    next_token = strchr (next_token, ';');
 	    if(next_token) {
@@ -763,12 +786,12 @@ _svg_style_parse_style_str (svg_style_t	*style,
 		    _svg_style_parse_nv_pair(style, nv_pair);
     }
     free(str);
-    
-    return SVG_STATUS_SUCCESS;    
+
+    return SVG_STATUS_SUCCESS;
 }
 
 svg_status_t
-_svg_style_apply_attributes (svg_style_t	*style, 
+_svg_style_apply_attributes (svg_style_t	*style,
 			     const char		**attributes)
 {
     unsigned int i;

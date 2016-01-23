@@ -25,6 +25,9 @@
 #include "svgint.h"
 #include "svg_parser.h"
 
+#define __DO_SVG_DEBUG
+#include "svg_debug.h"
+
 svg_status_t
 _svg_filter_init(svg_filter_t *filter) {
 	filter->results = StrHmapAlloc(12);
@@ -34,6 +37,12 @@ _svg_filter_init(svg_filter_t *filter) {
 	filter->last_primitive = NULL;
 	filter->first_primitive = NULL;
 
+	return SVG_STATUS_SUCCESS;
+}
+
+svg_status_t
+_svg_filter_deinit(svg_filter_t *filter) {
+	StrHmapFree(filter->results);
 	return SVG_STATUS_SUCCESS;
 }
 
@@ -57,6 +66,9 @@ _svg_parser_parse_filter (svg_parser_t *parser,
 	/* The only thing that distinguishes a group from a leaf is that
 	   the group becomes the new parent for future elements. */
 	parser->state->filter_element = *filter_element;
+
+	SVG_DEBUG("_svg_parser_parse_filter() created new Filter element.\n");
+
 	return status;
 }
 
@@ -105,6 +117,8 @@ static void parse_filter_in(svg_element_t* filter_element,
 			}
 		}
 	}
+
+	SVG_DEBUG("parse_filter_in() called.\n");
 }
 
 static svg_filter_primitive_t* parse_filter_primitive (svg_parser_t *parser,
@@ -118,6 +132,7 @@ static svg_filter_primitive_t* parse_filter_primitive (svg_parser_t *parser,
 		return NULL;
 
 	fprim->fe_operation = op;
+	fprim->primitive_order = filter_element->e.filter.number_of_primitives++;
 
 	_svg_attribute_get_length (attributes, "x", &(fprim->x), "0");
 	_svg_attribute_get_length (attributes, "y", &(fprim->x), "0");
@@ -141,6 +156,8 @@ static svg_filter_primitive_t* parse_filter_primitive (svg_parser_t *parser,
 	}
 
 	filter_element->e.filter.last_primitive = fprim;
+
+	SVG_DEBUG("parse_filter_primitive() called.\n");
 
 	return fprim;
 }
@@ -179,6 +196,8 @@ _svg_parser_parse_feBlend (svg_parser_t *parser,
 			&(fprim->p.fe_blend.in2),
 			&(fprim->p.fe_blend.in2_ref));
 
+	SVG_DEBUG("_svg_parser_parse_feBlend() called.\n");
+
 	/* we don't treat this as a regular SVG element internally */
 	return SVGINT_STATUS_UNKNOWN_ELEMENT;
 }
@@ -187,6 +206,7 @@ svg_status_t
 _svg_parser_parse_feColorMatrix (svg_parser_t *parser,
 				 const char **attributes,
 				 svg_element_t **not_used) {
+	/* we don't treat this as a regular SVG element internally */
 	return SVGINT_STATUS_UNKNOWN_ELEMENT;
 }
 
@@ -194,6 +214,7 @@ svg_status_t
 _svg_parser_parse_feComponentTransfer (svg_parser_t *parser,
 				       const char **attributes,
 				       svg_element_t **not_used) {
+	/* we don't treat this as a regular SVG element internally */
 	return SVGINT_STATUS_UNKNOWN_ELEMENT;
 }
 
@@ -209,24 +230,24 @@ _svg_parser_parse_feComposite (svg_parser_t *parser,
 		return SVG_STATUS_NO_MEMORY;
 
 	/* read out the feComposite operator */
-	feCompositeOperator_t operator = feComposite_over;
+	feCompositeOperator_t oprt = feComposite_over;
 	const char *feCompositeOperator_str;
 	if(_svg_attribute_get_string (attributes, "operator", &feCompositeOperator_str, "over") ==
 	   SVG_STATUS_SUCCESS) {
 		if(strcmp("over", feCompositeOperator_str) == 0)
-			operator = feComposite_over;
+			oprt = feComposite_over;
 		else if(strcmp("in", feCompositeOperator_str) == 0)
-			operator = feComposite_in;
+			oprt = feComposite_in;
 		else if(strcmp("out", feCompositeOperator_str) == 0)
-			operator = feComposite_out;
+			oprt = feComposite_out;
 		else if(strcmp("atop", feCompositeOperator_str) == 0)
-			operator = feComposite_atop;
+			oprt = feComposite_atop;
 		else if(strcmp("xor", feCompositeOperator_str) == 0)
-			operator = feComposite_xor;
+			oprt = feComposite_xor;
 		else if(strcmp("arithmetic", feCompositeOperator_str) == 0)
-			operator = feComposite_arithmetic;
+			oprt = feComposite_arithmetic;
 	}
-	fprim->p.fe_composite.operator = operator;
+	fprim->p.fe_composite.oprt = oprt;
 
 	/* get the in2 attribute */
 	parse_filter_in(filter_element, attributes, "in2",
@@ -234,12 +255,14 @@ _svg_parser_parse_feComposite (svg_parser_t *parser,
 			&(fprim->p.fe_composite.in2_ref));
 
 	/* get the k values for arithmetic mode */
-	if(operator == feComposite_arithmetic) {
+	if(oprt == feComposite_arithmetic) {
 		_svg_attribute_get_double (attributes, "k1", &fprim->p.fe_composite.k1, 0);
 		_svg_attribute_get_double (attributes, "k2", &fprim->p.fe_composite.k2, 0);
 		_svg_attribute_get_double (attributes, "k3", &fprim->p.fe_composite.k3, 0);
 		_svg_attribute_get_double (attributes, "k4", &fprim->p.fe_composite.k4, 0);
 	}
+
+	SVG_DEBUG("_svg_parser_parse_feComposite() called.\n");
 
 	/* we don't treat this as a regular SVG element internally */
 	return SVGINT_STATUS_UNKNOWN_ELEMENT;
@@ -249,6 +272,7 @@ svg_status_t
 _svg_parser_parse_feConvolveMatrix (svg_parser_t *parser,
 				    const char **attributes,
 				    svg_element_t **not_used) {
+	/* we don't treat this as a regular SVG element internally */
 	return SVGINT_STATUS_UNKNOWN_ELEMENT;
 }
 
@@ -256,6 +280,7 @@ svg_status_t
 _svg_parser_parse_feDiffuseLighting (svg_parser_t *parser,
 				     const char **attributes,
 				     svg_element_t **not_used) {
+	/* we don't treat this as a regular SVG element internally */
 	return SVGINT_STATUS_UNKNOWN_ELEMENT;
 }
 
@@ -263,6 +288,7 @@ svg_status_t
 _svg_parser_parse_feDisplacementMap (svg_parser_t *parser,
 				     const char **attributes,
 				     svg_element_t **not_used) {
+	/* we don't treat this as a regular SVG element internally */
 	return SVGINT_STATUS_UNKNOWN_ELEMENT;
 }
 
@@ -281,6 +307,8 @@ _svg_parser_parse_feFlood (svg_parser_t *parser,
 		_svg_color_init_from_str (&(fprim->p.fe_flood.color), color_str);
 
 	_svg_attribute_get_double (attributes, "flood-opacity", &(fprim->p.fe_flood.opacity), 0);
+
+	SVG_DEBUG("_svg_parser_parse_feFlood() called.\n");
 
 	/* we don't treat this as a regular SVG element internally */
 	return SVGINT_STATUS_UNKNOWN_ELEMENT;
@@ -305,6 +333,9 @@ _svg_parser_parse_feGaussianBlur (svg_parser_t *parser,
 	fprim->p.fe_gaussian_blur.std_dev_x = d_x;
 	fprim->p.fe_gaussian_blur.std_dev_y = d_y;
 
+	SVG_DEBUG("_svg_parser_parse_feGaussianBlur() called.\n");
+
+	/* we don't treat this as a regular SVG element internally */
 	return SVGINT_STATUS_UNKNOWN_ELEMENT;
 }
 
@@ -312,6 +343,7 @@ svg_status_t
 _svg_parser_parse_feImage (svg_parser_t *parser,
 			   const char **attributes,
 			   svg_element_t **not_used) {
+	/* we don't treat this as a regular SVG element internally */
 	return SVGINT_STATUS_UNKNOWN_ELEMENT;
 }
 
@@ -319,6 +351,7 @@ svg_status_t
 _svg_parser_parse_feMerge (svg_parser_t *parser,
 			   const char **attributes,
 			   svg_element_t **not_used) {
+	/* we don't treat this as a regular SVG element internally */
 	return SVGINT_STATUS_UNKNOWN_ELEMENT;
 }
 
@@ -326,6 +359,7 @@ svg_status_t
 _svg_parser_parse_feMorphology (svg_parser_t *parser,
 				const char **attributes,
 				svg_element_t **not_used) {
+	/* we don't treat this as a regular SVG element internally */
 	return SVGINT_STATUS_UNKNOWN_ELEMENT;
 }
 
@@ -341,6 +375,9 @@ _svg_parser_parse_feOffset (svg_parser_t *parser,
 	_svg_attribute_get_double (attributes, "dx", &(fprim->p.fe_offset.dx), 0);
 	_svg_attribute_get_double (attributes, "dy", &(fprim->p.fe_offset.dy), 0);
 
+	SVG_DEBUG("_svg_parser_parse_feOffset() called.\n");
+
+	/* we don't treat this as a regular SVG element internally */
 	return SVGINT_STATUS_UNKNOWN_ELEMENT;
 }
 
@@ -348,6 +385,7 @@ svg_status_t
 _svg_parser_parse_feSpecularLightning (svg_parser_t *parser,
 				       const char **attributes,
 				       svg_element_t **not_used) {
+	/* we don't treat this as a regular SVG element internally */
 	return SVGINT_STATUS_UNKNOWN_ELEMENT;
 }
 
@@ -355,6 +393,7 @@ svg_status_t
 _svg_parser_parse_feTile (svg_parser_t *parser,
 			  const char **attributes,
 			  svg_element_t **not_used) {
+	/* we don't treat this as a regular SVG element internally */
 	return SVGINT_STATUS_UNKNOWN_ELEMENT;
 }
 
@@ -362,5 +401,6 @@ svg_status_t
 _svg_parser_parse_feTurbulence (svg_parser_t *parser,
 				const char **attributes,
 				svg_element_t **not_used) {
+	/* we don't treat this as a regular SVG element internally */
 	return SVGINT_STATUS_UNKNOWN_ELEMENT;
 }

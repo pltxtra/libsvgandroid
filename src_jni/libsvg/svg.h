@@ -1,17 +1,17 @@
 /* svg.h: Public interface for libsvg
- 
+
    Copyright © 2002 USC/Information Sciences Institute
-  
+
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public License as
    published by the Free Software Foundation; either version 2 of the
    License, or (at your option) any later version.
-  
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
    Library General Public License for more details.
-  
+
    You should have received a copy of the GNU Library General Public
    License along with this program; if not, write to the
    Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -28,7 +28,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-	
+
 typedef struct svg svg_t;
 typedef struct svg_group svg_group_t;
 typedef struct svg_element svg_element_t;
@@ -66,7 +66,7 @@ typedef struct svg_length {
 typedef struct svg_bounding_box {
 	unsigned int left, top, right, bottom;
 } svg_bounding_box_t;
-	
+
 typedef struct svg_rect {
     double x;
     double y;
@@ -270,6 +270,8 @@ typedef struct svg_render_engine {
     svg_status_t (* set_font_size) (void *closure, double size);
     svg_status_t (* set_font_style) (void *closure, svg_font_style_t font_style);
     svg_status_t (* set_font_weight) (void *closure, unsigned int font_weight);
+    svg_status_t (* begin_filter) (void *closure, const char* id);
+    svg_status_t (* add_filter_feBlend) (void *closure);
     svg_status_t (* set_opacity) (void *closure, double opacity);
     svg_status_t (* set_stroke_dash_array) (void *closure, double *dash_array, int num_dashes);
     svg_status_t (* set_stroke_dash_offset) (void *closure, svg_length_t *offset);
@@ -329,7 +331,7 @@ typedef struct svg_render_engine {
 				   svg_length_t	 *width,
 				   svg_length_t	 *height);
 
-	
+
 	/* get bounding box of last drawing, in pixels - returns 0 if bounding box is outside the visible clip, non-0 if inside the visible clip */
 	int (*get_last_bounding_box)(void *closure, svg_bounding_box_t *bbox);
 } svg_render_engine_t;
@@ -338,7 +340,7 @@ svg_status_t
 svg_create (svg_t **svg);
 
 	void svg_enable_path_cache(svg_t *svg);
-	
+
 svg_status_t
 svg_destroy (svg_t *svg);
 
@@ -356,7 +358,7 @@ svg_parse_buffer_and_inject (svg_t *svg, svg_element_t *parent, const char *buf,
 
 svg_status_t
 svg_drop_element(svg_t *svg, svg_element_t *element);
-	
+
 svg_status_t
 svg_parse_chunk_begin (svg_t *svg);
 svg_status_t
@@ -369,7 +371,7 @@ svg_element_enable_events(svg_element_t *element);
 
 svg_element_t *
 svg_event_coords_match(svg_t *svg, int x, int y);
-	
+
 svg_status_t
 svg_render (svg_t		*svg,
 	    svg_render_engine_t	*engine,
@@ -400,7 +402,7 @@ svg_element_render (svg_element_t		*element,
 
 void svg_element_debug_id_table(svg_element_t *element);
 void svg_element_debug_render_tree(svg_element_t *element);
-	
+
 svg_pattern_t *
 svg_element_pattern (svg_element_t *element);
 

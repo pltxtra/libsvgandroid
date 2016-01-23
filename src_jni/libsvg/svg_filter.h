@@ -23,12 +23,12 @@
 
 #pragma once
 
+#include "svg.h"
+#include "strhmap_cc.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "svg.h"
-#include "strhmap_cc.h"
 
 	typedef enum {
 		op_feBlend,
@@ -81,7 +81,7 @@ extern "C" {
 	} feCompositeOperator_t;
 
 	struct feComposite {
-		feCompositeOperator_t operator;
+		feCompositeOperator_t oprt;
 		svg_filter_in_t in2;
 		struct svg_filter_primitive *in2_ref;
 		double k1, k2, k3, k4; /* only applicable if operator = cm_arithmetic */
@@ -137,6 +137,8 @@ extern "C" {
 	};
 
 	typedef struct svg_filter_primitive {
+		int primitive_order; /* starting at first element: 0 */
+
 		svg_filter_operation_t fe_operation;
 
 		svg_length_t x, y, width, height;
@@ -168,18 +170,19 @@ extern "C" {
 	} svg_filter_primitive_t;
 
 	typedef struct svg_filter {
+		int number_of_primitives; /* no primitives == 0 */
+
 		svg_filter_primitive_t *last_primitive;
 		svg_filter_primitive_t *first_primitive;
 		StrHmap* results;
 	} svg_filter_t;
 
 
-	svg_status_t
-	_svg_filter_init(svg_filter_t *filter_element);
-	svg_status_t
-	_svg_filter_render(svg_filter_t* filter,
-			   svg_render_engine_t* engine,
-			   void* closure);
+	svg_status_t _svg_filter_init(svg_filter_t *filter_element);
+	svg_status_t _svg_filter_deinit(svg_filter_t *filter);
+	svg_status_t _svg_filter_render(svg_filter_t* filter,
+					svg_render_engine_t* engine,
+					void* closure);
 
 #ifdef __cplusplus
 }

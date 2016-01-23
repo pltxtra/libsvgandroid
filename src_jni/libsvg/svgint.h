@@ -179,6 +179,7 @@ typedef struct svg_path {
 #define SVG_STYLE_FLAG_VISIBILITY			0x10000000000ULL
 #define SVG_STYLE_FLAG_WORD_SPACING			0x20000000000ULL
 #define SVG_STYLE_FLAG_WRITING_MODE			0x40000000000ULL
+#define SVG_STYLE_FLAG_FILTER				0x80000000000ULL
 
 typedef struct svg_style {
     svg_t				*svg;
@@ -206,6 +207,8 @@ typedef struct svg_style {
     double				stroke_opacity;
     svg_paint_t				stroke_paint;
     svg_length_t			stroke_width;
+
+    svg_element_t*			filter_element;
 
     svg_color_t				color;
     svg_text_anchor_t			text_anchor;

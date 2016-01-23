@@ -178,6 +178,9 @@ static void _svg_element_delete (svg_element_t *element)
     case SVG_ELEMENT_TYPE_IMAGE:
 	    (void) _svg_image_deinit (&element->e.image);
 	break;
+    case SVG_ELEMENT_TYPE_FILTER:
+	    (void) _svg_filter_deinit (&element->e.filter);
+	break;
     default:
 	break;
     }
