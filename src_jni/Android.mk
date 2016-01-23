@@ -114,7 +114,9 @@ LIBSVG_ANDROID_SOURCES = \
 	libsvg-android/svg_android_render_helper.c \
 	libsvg-android/svg_android_state.c \
 	libsvg-android/svg-android.h \
-	libsvg-android/svg-android-internal.h
+	libsvg-android/svg-android-internal.h \
+	libsvg-android/svg_android_filter.c
+
 
 # package it
 LOCAL_LDLIBS := -llog

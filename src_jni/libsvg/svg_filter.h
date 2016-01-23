@@ -49,18 +49,6 @@ extern "C" {
 		op_feTurbulence
 	} svg_filter_operation_t;
 
-	typedef enum {
-		in_SourceGraphic, in_SourceAlpha,
-		in_BackgroundGraphic, in_BackgroundAlpha,
-		in_FillPaint, in_StrokePaint,
-		in_Reference
-	} svg_filter_in_t;
-
-	typedef enum {
-		feBlend_normal, feBlend_multiply,
-		feBlend_screen, feBlend_darken, feBlend_lighten
-	} feBlendMode_t;
-
 	struct feBlend {
 		feBlendMode_t mode;
 		svg_filter_in_t in2;
@@ -74,11 +62,6 @@ extern "C" {
 	struct feComponentTransfer {
 		/* not supported */
 	};
-
-	typedef enum {
-		feComposite_over, feComposite_in, feComposite_out,
-		feComposite_atop, feComposite_xor, feComposite_arithmetic
-	} feCompositeOperator_t;
 
 	struct feComposite {
 		feCompositeOperator_t oprt;

@@ -66,6 +66,14 @@ svg_render_engine_t SVG_ANDROID_RENDER_ENGINE = {
 	_svg_android_set_stroke_paint,
 	_svg_android_set_stroke_width,
 	_svg_android_set_text_anchor,
+	_svg_android_set_filter,
+	/* filter */
+	_svg_android_begin_filter,
+	_svg_android_add_filter_feBlend,
+	_svg_android_add_filter_feComposite,
+	_svg_android_add_filter_feFlood,
+	_svg_android_add_filter_feGaussianBlur,
+	_svg_android_add_filter_feOffset,
 	/* transform */
 	_svg_android_apply_clip_box,
 	_svg_android_transform,
@@ -97,16 +105,16 @@ svg_android_status_t svgAndroidDestroy(svg_android_t *svg_android) {
 }
 
 svg_android_t *svgAndroidCreate(void) {
-	svg_android_t *svg_android;	
-	
+	svg_android_t *svg_android;
+
 	svg_android = (svg_android_t *)malloc (sizeof (svg_android_t));
 
 	if (svg_android != NULL) {
 		svg_android->do_antialias = JNI_FALSE;
-		
+
 		svg_android->canvas = NULL;
 		svg_android->state = NULL;
-				
+
 		if(svg_create (&(svg_android)->svg)) {
 			free(svg_android);
 			svg_android = NULL;
@@ -118,7 +126,7 @@ svg_android_t *svgAndroidCreate(void) {
 
 JNIEXPORT jlong JNICALL Java_com_toolkits_libsvgandroid_SvgRaster_svgAndroidCreate
 (JNIEnv * env, jclass jc)
-{	
+{
 	return (jlong)svgAndroidCreate();
 }
 
@@ -135,12 +143,12 @@ JNIEXPORT jint JNICALL Java_com_toolkits_libsvgandroid_SvgRaster_svgAndroidParse
 {
 	svg_android_t *svg_android = (svg_android_t *)_svg_android_r;
 
-	
+
 	const char *buf = (*env)->GetStringUTFChars(env, _bfr, JNI_FALSE);
 
 	svg_android_status_t status = svg_parse_buffer (svg_android->svg, buf, strlen(buf));
-	
-	(*env)->ReleaseStringUTFChars(env, _bfr, buf); 
+
+	(*env)->ReleaseStringUTFChars(env, _bfr, buf);
 
 	return status;
 }
@@ -160,8 +168,8 @@ JNIEXPORT jint JNICALL Java_com_toolkits_libsvgandroid_SvgRaster_svgAndroidParse
 	const char *buf = (*env)->GetStringUTFChars(env, _bfr, JNI_FALSE);
 
 	svg_android_status_t status = svg_parse_chunk (svg_android->svg, buf, strlen(buf));
-	
-	(*env)->ReleaseStringUTFChars(env, _bfr, buf); 
+
+	(*env)->ReleaseStringUTFChars(env, _bfr, buf);
 
 	return status;
 }
@@ -178,13 +186,13 @@ static jclass raster_clazz = NULL; // android SvgRaster class
 static jclass bitmap_clazz = NULL; // android Bitmap class
 static jclass matrix_clazz = NULL; // android matrix class
 static jclass shader_clazz = NULL; // android shader class
-static jclass path_clazz = NULL;   // android path class	
+static jclass path_clazz = NULL;   // android path class
 static jclass paint_clazz = NULL; // android paint class
 static jclass dashPathEffect_clazz = NULL; // android paint dash effect class
 
 void __prepare_android_interface(svg_android_t *svg_android, JNIEnv *env, jobject *android_canvas) {
 	jclass d;
-	
+
 	svg_android->canvas = android_canvas;
 	if(svg_android->env == env) {
 #if 0
@@ -251,7 +259,7 @@ void __prepare_android_interface(svg_android_t *svg_android, JNIEnv *env, jobjec
 		/* android bitmap method references */
 		__android_log_print(ANDROID_LOG_INFO, "libsvg-android",
 				    "local reference at line %d is %p", __LINE__, svg_android->bitmap_erase_color);
-		
+
 		/* android matrix method references */
 		__android_log_print(ANDROID_LOG_INFO, "libsvg-android",
 				    "local reference at line %d is %p", __LINE__, svg_android->matrix_constructor);
@@ -265,11 +273,11 @@ void __prepare_android_interface(svg_android_t *svg_android, JNIEnv *env, jobjec
 				    "local reference at line %d is %p", __LINE__, svg_android->matrix_reset);
 		__android_log_print(ANDROID_LOG_INFO, "libsvg-android",
 				    "local reference at line %d is %p", __LINE__, svg_android->matrix_set);
-		
+
 		/* android shader method references */
 		__android_log_print(ANDROID_LOG_INFO, "libsvg-android",
 				    "local reference at line %d is %p", __LINE__, svg_android->shader_setLocalMatrix);
-		
+
 		/* android path method references */
 		__android_log_print(ANDROID_LOG_INFO, "libsvg-android",
 				    "local reference at line %d is %p", __LINE__, svg_android->path_constructor);
@@ -289,7 +297,7 @@ void __prepare_android_interface(svg_android_t *svg_android, JNIEnv *env, jobjec
 				    "local reference at line %d is %p", __LINE__, svg_android->path_close);
 		__android_log_print(ANDROID_LOG_INFO, "libsvg-android",
 				    "local reference at line %d is %p", __LINE__, svg_android->path_reset);
-		
+
 		/* android paint method references */
 		__android_log_print(ANDROID_LOG_INFO, "libsvg-android",
 				    "local reference at line %d is %p", __LINE__, svg_android->paint_constructor);
@@ -309,16 +317,16 @@ void __prepare_android_interface(svg_android_t *svg_android, JNIEnv *env, jobjec
 				    "local reference at line %d is %p", __LINE__, svg_android->paint_setAntialias);
 		__android_log_print(ANDROID_LOG_INFO, "libsvg-android",
 				    "local reference at line %d is %p", __LINE__, svg_android->paint_set);
-		
+
 		/* DashPathEffect method/constructors refs */
 		__android_log_print(ANDROID_LOG_INFO, "libsvg-android",
 				    "local reference at line %d is %p", __LINE__, svg_android->dashPathEffect_constructor);
 #endif
 		return;
 	}
-	
+
 	svg_android->env = env;
-		
+
 	// prepare canvas class/methods
 	if(!canvas_clazz) {
 		d = (*env)->FindClass(env, "android/graphics/Canvas");
@@ -332,16 +340,16 @@ void __prepare_android_interface(svg_android_t *svg_android, JNIEnv *env, jobjec
 	svg_android->canvas_restore = (*env)->GetMethodID(env,svg_android->canvas_clazz, "restore", "()V");
 	svg_android->canvas_clip_rect = (*env)->GetMethodID(env,
 		svg_android->canvas_clazz, "clipRect",
-		"(FFFF)Z");	
+		"(FFFF)Z");
 	svg_android->canvas_concat = (*env)->GetMethodID(env,
 		svg_android->canvas_clazz, "concat",
-		"(Landroid/graphics/Matrix;)V");	
+		"(Landroid/graphics/Matrix;)V");
 	svg_android->canvas_draw_bitmap = (*env)->GetMethodID(env,
 		svg_android->canvas_clazz, "drawBitmap",
-		"(Landroid/graphics/Bitmap;Landroid/graphics/Matrix;Landroid/graphics/Paint;)V");	
+		"(Landroid/graphics/Bitmap;Landroid/graphics/Matrix;Landroid/graphics/Paint;)V");
 	svg_android->canvas_draw_bitmap2 = (*env)->GetMethodID(env,
 		svg_android->canvas_clazz, "drawBitmap",
-		"(Landroid/graphics/Bitmap;FFLandroid/graphics/Paint;)V");	
+		"(Landroid/graphics/Bitmap;FFLandroid/graphics/Paint;)V");
 	svg_android->canvas_draw_path = (*env)->GetMethodID(env,
 		svg_android->canvas_clazz, "drawPath",
 		"(Landroid/graphics/Path;Landroid/graphics/Paint;)V");
@@ -357,14 +365,14 @@ void __prepare_android_interface(svg_android_t *svg_android, JNIEnv *env, jobjec
 	svg_android->canvas_getHeight =  (*env)->GetMethodID(env,
 		svg_android->canvas_clazz, "getHeight",
 		"()I");
-	
+
 	// prepare raster
 	if(!raster_clazz) {
 		d = (*env)->FindClass(env, "com/toolkits/libsvgandroid/SvgRaster");
 		raster_clazz = (jclass)((*env)->NewGlobalRef(env, (jobject)d));
 	}
 	svg_android->raster_clazz = raster_clazz;
-	
+
 	svg_android->raster_setTypeface = (*env)->GetStaticMethodID(
 		env,
 		svg_android->raster_clazz, "setTypeface",
@@ -428,14 +436,14 @@ void __prepare_android_interface(svg_android_t *svg_android, JNIEnv *env, jobjec
 		svg_android->raster_clazz, "drawRect", "(Landroid/graphics/Canvas;Landroid/graphics/Paint;FFFFFF)V");
 	svg_android->raster_debugMatrix = (*env)->GetStaticMethodID(env,
 		svg_android->raster_clazz, "debugMatrix", "(Landroid/graphics/Matrix;)V");
-	
+
 	// prepare bitmap class/methods
 	if(!bitmap_clazz) {
 		d = (*env)->FindClass(env, "android/graphics/Bitmap");
 		bitmap_clazz = (jclass)((*env)->NewGlobalRef(env, (jobject)d));
 	}
 	svg_android->bitmap_clazz = bitmap_clazz;
-	
+
 	svg_android->bitmap_erase_color = (*env)->GetMethodID(env,
 		svg_android->bitmap_clazz, "eraseColor",
 		"(I)V"
@@ -447,7 +455,7 @@ void __prepare_android_interface(svg_android_t *svg_android, JNIEnv *env, jobjec
 		matrix_clazz = (jclass)((*env)->NewGlobalRef(env, (jobject)d));
 	}
 	svg_android->matrix_clazz = matrix_clazz;
-	
+
 	svg_android->matrix_constructor = (*env)->GetMethodID(env,
 		svg_android->matrix_clazz, "<init>", "()V");
 	svg_android->matrix_postTranslate = (*env)->GetMethodID(env,
@@ -467,7 +475,7 @@ void __prepare_android_interface(svg_android_t *svg_android, JNIEnv *env, jobjec
 		shader_clazz = (jclass)((*env)->NewGlobalRef(env, (jobject)d));
 	}
 	svg_android->shader_clazz = shader_clazz;
-	
+
 	svg_android->shader_setLocalMatrix = (*env)->GetMethodID(env,
 		svg_android->shader_clazz, "setLocalMatrix", "(Landroid/graphics/Matrix;)V");
 
@@ -477,11 +485,11 @@ void __prepare_android_interface(svg_android_t *svg_android, JNIEnv *env, jobjec
 		path_clazz = (jclass)((*env)->NewGlobalRef(env, (jobject)d));
 	}
 	svg_android->path_clazz = path_clazz;
-	
+
 	svg_android->path_constructor = (*env)->GetMethodID(env,
-		svg_android->path_clazz, "<init>", "()V");	
+		svg_android->path_clazz, "<init>", "()V");
 	svg_android->path_clone_constructor = (*env)->GetMethodID(env,
-		svg_android->path_clazz, "<init>", "(Landroid/graphics/Path;)V");	
+		svg_android->path_clazz, "<init>", "(Landroid/graphics/Path;)V");
 	svg_android->path_transform = (*env)->GetMethodID(env,
 		svg_android->path_clazz, "transform", "(Landroid/graphics/Matrix;)V");
 	svg_android->path_moveTo = (*env)->GetMethodID(env,
@@ -503,9 +511,9 @@ void __prepare_android_interface(svg_android_t *svg_android, JNIEnv *env, jobjec
 		paint_clazz = (jclass)((*env)->NewGlobalRef(env, (jobject)d));
 	}
 	svg_android->paint_clazz = paint_clazz;
-	
+
 	svg_android->paint_constructor = (*env)->GetMethodID(env,
-		svg_android->paint_clazz, "<init>", "()V");	
+		svg_android->paint_clazz, "<init>", "()V");
 	svg_android->paint_setPathEffect = (*env)->GetMethodID(
 		env,
 		svg_android->paint_clazz, "setPathEffect",
@@ -525,9 +533,9 @@ void __prepare_android_interface(svg_android_t *svg_android, JNIEnv *env, jobjec
 	svg_android->paint_setAntialias = (*env)->GetMethodID(env,
 		svg_android->paint_clazz, "setAntiAlias", "(Z)V");
 	svg_android->paint_set = (*env)->GetMethodID(env,
-		svg_android->paint_clazz, "set", "(Landroid/graphics/Paint;)V");	
+		svg_android->paint_clazz, "set", "(Landroid/graphics/Paint;)V");
 	svg_android->paint_reset = (*env)->GetMethodID(env,
-		svg_android->paint_clazz, "reset", "()V");	
+		svg_android->paint_clazz, "reset", "()V");
 
 	// prepare dash path effect class/methods
 	if(!dashPathEffect_clazz) {
@@ -535,9 +543,9 @@ void __prepare_android_interface(svg_android_t *svg_android, JNIEnv *env, jobjec
 		dashPathEffect_clazz = (jclass)((*env)->NewGlobalRef(env, (jobject)d));
 	}
 	svg_android->dashPathEffect_clazz = dashPathEffect_clazz;
-	
+
 	svg_android->dashPathEffect_constructor = (*env)->GetMethodID(env,
-		svg_android->dashPathEffect_clazz, "<init>", "([FF)V");	
+		svg_android->dashPathEffect_clazz, "<init>", "([FF)V");
 }
 
 void svgAndroidSetAntialiasing(svg_android_t *svg_android, jboolean doAntiAlias) {
@@ -548,13 +556,13 @@ JNIEXPORT int JNICALL Java_com_toolkits_libsvgandroid_SvgRaster_svgAndroidSetAnt
 (JNIEnv *env, jclass jc, jlong _svg_android_r, jboolean doAntiAlias) {
 	svg_android_t *svg_android = (svg_android_t *)_svg_android_r;
 	svg_android->do_antialias = doAntiAlias;
-	return 0;	
+	return 0;
 }
 
 svg_status_t svgAndroidRender
 (JNIEnv *env, svg_android_t *svg_android, jobject android_canvas)
 {
-	__prepare_android_interface(svg_android, env, android_canvas); 
+	__prepare_android_interface(svg_android, env, android_canvas);
 
 	_svg_android_push_state (svg_android, NULL, NULL);
 	svg_android->state->viewport_width = ANDROID_GET_WIDTH(svg_android);
@@ -576,20 +584,20 @@ JNIEXPORT jint JNICALL Java_com_toolkits_libsvgandroid_SvgRaster_svgAndroidRende
 }
 
 svg_status_t svgAndroidRenderToArea(JNIEnv *env, svg_android_t *svg_android, jobject android_canvas, int x, int y, int w, int h) {
-	__prepare_android_interface(svg_android, env, android_canvas); 
+	__prepare_android_interface(svg_android, env, android_canvas);
 
 	_svg_android_push_state (svg_android, NULL, NULL);
 
 	svg_android->state->viewport_width = w;
 	svg_android->state->viewport_height = h;
-	
+
 	svg_android->fit_to_area = -1;
 	svg_android->fit_to_x = x;
 	svg_android->fit_to_y = y;
 	svg_android->fit_to_w = w;
-	svg_android->fit_to_h = h;	
+	svg_android->fit_to_h = h;
 	svg_android->fit_to_MATRIX = NULL;
-	
+
 	svg_status_t return_status =  svg_render (svg_android->svg, &SVG_ANDROID_RENDER_ENGINE, svg_android);
 
 	_svg_android_pop_state (svg_android);
@@ -614,7 +622,7 @@ JNIEXPORT void JNICALL Java_com_toolkits_libsvgandroid_SvgRaster_svgAndroidSetBo
 	if(top < 0) top = 0;
 	if(right < 0) right = 0;
 	if(bottom < 0) bottom = 0;
-	
+
 	__internal_bounding_box_is_in_clip = is_in_clip == JNI_TRUE ? -1 : 0;
 	__internal_bounding_box.left = left;
 	__internal_bounding_box.top = top;
@@ -628,9 +636,8 @@ int svgAndroidGetInternalBoundingBox(svg_bounding_box_t *bbox) {
 }
 
 void svgAndroidEnablePathCache(svg_android_t *svg_android) {
-       
+
 #if 0 // caching does not work on all devices it seems, I do not know why...
 	svg_enable_path_cache(svg_android->svg);
 #endif
 }
-

@@ -234,6 +234,26 @@ typedef struct svg_paint {
     } p;
 } svg_paint_t;
 
+typedef enum {
+    in_SourceGraphic,
+    in_SourceAlpha,
+    in_BackgroundGraphic,
+    in_BackgroundAlpha,
+    in_FillPaint,
+    in_StrokePaint,
+    in_Reference
+} svg_filter_in_t;
+
+typedef enum {
+    feBlend_normal, feBlend_multiply,
+    feBlend_screen, feBlend_darken, feBlend_lighten
+} feBlendMode_t;
+
+typedef enum {
+    feComposite_over, feComposite_in, feComposite_out,
+    feComposite_atop, feComposite_xor, feComposite_arithmetic
+} feCompositeOperator_t;
+
 /* XXX: Here's another piece of the API that needs deep consideration. */
 typedef struct svg_render_engine {
     /* hierarchy */
@@ -270,8 +290,6 @@ typedef struct svg_render_engine {
     svg_status_t (* set_font_size) (void *closure, double size);
     svg_status_t (* set_font_style) (void *closure, svg_font_style_t font_style);
     svg_status_t (* set_font_weight) (void *closure, unsigned int font_weight);
-    svg_status_t (* begin_filter) (void *closure, const char* id);
-    svg_status_t (* add_filter_feBlend) (void *closure);
     svg_status_t (* set_opacity) (void *closure, double opacity);
     svg_status_t (* set_stroke_dash_array) (void *closure, double *dash_array, int num_dashes);
     svg_status_t (* set_stroke_dash_offset) (void *closure, svg_length_t *offset);
@@ -282,6 +300,38 @@ typedef struct svg_render_engine {
     svg_status_t (* set_stroke_paint) (void *closure, const svg_paint_t *paint);
     svg_status_t (* set_stroke_width) (void *closure, svg_length_t *width);
     svg_status_t (* set_text_anchor) (void *closure, svg_text_anchor_t text_anchor);
+    svg_status_t (* set_filter) (void *closure, const char* id);
+    /* filter */
+    svg_status_t (* begin_filter) (void *closure, const char* id);
+    svg_status_t (* add_filter_feBlend) (void *closure,
+					 svg_length_t x, svg_length_t y,
+					 svg_length_t width, svg_length_t height,
+					 svg_filter_in_t in, int in_op_reference,
+					 svg_filter_in_t in2, int in2_op_reference,
+					 feBlendMode_t mode);
+    svg_status_t (* add_filter_feComposite) (void *closure,
+					     svg_length_t x, svg_length_t y,
+					     svg_length_t width, svg_length_t height,
+					     feCompositeOperator_t oprt,
+					     svg_filter_in_t in, int in_op_reference,
+					     svg_filter_in_t in2, int in2_op_reference,
+					     double k1, double k2, double k3, double k4);
+    svg_status_t (* add_filter_feFlood) (void *closure,
+					 svg_length_t x, svg_length_t y,
+					 svg_length_t width, svg_length_t height,
+					 svg_filter_in_t in, int in_op_reference,
+					 svg_color_t color, double opacity);
+    svg_status_t (* add_filter_feGaussianBlur) (void *closure,
+						svg_length_t x, svg_length_t y,
+						svg_length_t width, svg_length_t height,
+						svg_filter_in_t in, int in_op_reference,
+						double std_dev_x, double std_dev_y);
+    svg_status_t (* add_filter_feOffset) (void *closure,
+					  svg_length_t x, svg_length_t y,
+					  svg_length_t width, svg_length_t height,
+					  svg_filter_in_t in, int in_op_reference,
+					  double dx, double dy);
+
     /* transform */
 	svg_status_t (* apply_clip_box) (void *closure,
 					 svg_length_t *x,

@@ -52,15 +52,15 @@ typedef enum svg_android_render_type {
 	SVG_ANDROID_RENDER_TYPE_STROKE
 } svg_android_render_type_t;
 
-typedef struct svg_android_state {	
+typedef struct svg_android_state {
 	svg_android_t *instance;
 
 	// we need to store the last path point, since we cant get it from an android path...
 	// this we need for the arc_to implementation...
 	double last_x, last_y;
-	
+
 	jobject offscreen_bitmap;
-	
+
 	svg_bounding_box_t bounding_box;
 
 	jobject saved_canvas; // temporary canvas
@@ -69,7 +69,7 @@ typedef struct svg_android_state {
 	jobject state_path; // this is always the same object for each svg_android_state instance
 	jobject paint;
 	jobject matrix;
-	
+
 	svg_color_t color;
 
 	/* save state data for "copy_android_state" function */
@@ -78,7 +78,7 @@ typedef struct svg_android_state {
 	svg_stroke_line_cap_t line_cap;
 	svg_stroke_line_join_t line_join;
 	double miter_limit;
-	
+
 	svg_paint_t fill_paint;
 	svg_paint_t stroke_paint;
 	double fill_opacity;
@@ -110,31 +110,31 @@ struct svg_android {
 	svg_t *svg;
 
 	svg_android_state_t *state;
-	
+
 	unsigned int viewport_width;
 	unsigned int viewport_height;
 
 	jboolean do_antialias; // set to !0 for "true", 0 for "false"
-	
+
 	unsigned int fit_to_area; // set to !0 for "true", 0 for "false"
 	unsigned int fit_to_x, fit_to_y, fit_to_w, fit_to_h;
 	double fit_to_scale;
 	jobject fit_to_MATRIX;
-	
+
 //	cairo_t cr;
 	JNIEnv *env;
-	
+
 	jobject canvas; // android canvas reference
-	
+
 	jclass canvas_clazz; // android Canvas class
 	jclass raster_clazz; // android SvgRaster class
 	jclass bitmap_clazz; // android Bitmap class
 	jclass matrix_clazz; // android matrix class
 	jclass shader_clazz; // android shader class
-	jclass path_clazz;   // android path class	
+	jclass path_clazz;   // android path class
 	jclass paint_clazz; // android paint class
 	jclass dashPathEffect_clazz; // android paint dash effect class
-	
+
 	/* android canvas method references */
 	jmethodID canvas_constructor;
 	jmethodID canvas_save;
@@ -148,7 +148,7 @@ struct svg_android {
 	jmethodID canvas_drawRGB;
 	jmethodID canvas_getWidth;
 	jmethodID canvas_getHeight;
-	
+
 	/* android razter method references */
 	jmethodID raster_setTypeface;
 	jmethodID raster_getBounds;
@@ -168,10 +168,10 @@ struct svg_android {
 	jmethodID raster_drawEllipse;
 	jmethodID raster_drawRect;
 	jmethodID raster_debugMatrix;
-	
+
 	/* android bitmap method references */
 	jmethodID bitmap_erase_color;
-	
+
 	/* android matrix method references */
 	jmethodID matrix_constructor;
 	jmethodID matrix_postTranslate;
@@ -182,7 +182,7 @@ struct svg_android {
 
 	/* android shader method references */
 	jmethodID shader_setLocalMatrix;
-	
+
 	/* android path method references */
 	jmethodID path_constructor;
 	jmethodID path_clone_constructor;
@@ -279,7 +279,7 @@ struct svg_android {
 	(*(a->env))->CallStaticVoidMethod(a->env, a->raster_clazz, a->raster_drawRect, a->canvas, a->state->paint, X, Y, W, H, RX, RY)
 #define ANDROID_DEBUG_MATRIX(a,A)				\
 	(*(a->env))->CallStaticVoidMethod(a->env, a->raster_clazz, a->raster_debugMatrix, A)
-	
+
 #define ANDROID_FILL_BITMAP(a,b,c) \
 	(*(a->env))->CallVoidMethod(a->env, b, a->bitmap_erase_color, c)
 
@@ -297,8 +297,8 @@ struct svg_android {
 	(*(a->env))->CallVoidMethod(a->env, m,a->matrix_set,M)
 
 #define ANDROID_SHADER_SET_MATRIX(a,s,m) \
-	(*(a->env))->CallVoidMethod(a->env, s, a->shader_setLocalMatrix, m) 
-	
+	(*(a->env))->CallVoidMethod(a->env, s, a->shader_setLocalMatrix, m)
+
 #define ANDROID_PATH_CREATE(a) \
 	(*(a->env))->NewObject(a->env, a->path_clazz, a->path_constructor)
 #define ANDROID_PATH_CLONE(a, b)						\
@@ -339,11 +339,11 @@ struct svg_android {
 	(*(e->env))->CallVoidMethod(e->env, e->state->paint, e->paint_getTextPath, (*(e->env))->NewStringUTF(e->env, T), 0, strlen_UTF8(T), X, Y, e->state->path)
 #define ANDROID_SET_ANTIALIAS(e,P,B)					\
 	(*(e->env))->CallVoidMethod(e->env, P, e->paint_setAntialias, B)
-	
+
 #define ANDROID_GET_DASHEFFECT(a,b,c)		\
 	(*(a->env))->NewObject(a->env, a->dashPathEffect_clazz, a->dashPathEffect_constructor,b,c)
-	
-	
+
+
 /* svg_android_state.c */
 
 svg_android_status_t
@@ -424,7 +424,7 @@ _svg_android_close_path (void *closure);
 
 svg_status_t
 _svg_android_free_path_cache(void *closure, void **path_cache);
-	
+
 svg_status_t
 _svg_android_set_color (void *closure, const svg_color_t *color);
 
@@ -482,12 +482,44 @@ _svg_android_set_stroke_width (void *closure, svg_length_t *width);
 svg_status_t
 _svg_android_set_text_anchor (void *closure, svg_text_anchor_t text_anchor);
 
-	svg_status_t _svg_android_apply_clip_box (void *closure,
-						  svg_length_t *x,
-						  svg_length_t *y,
-						  svg_length_t *width,
-						  svg_length_t *height);
-	
+svg_status_t _svg_android_set_filter (void *closure, const char* id);
+
+svg_status_t _svg_android_begin_filter (void *closure, const char* id);
+svg_status_t _svg_android_add_filter_feBlend (void *closure,
+					      svg_length_t x, svg_length_t y,
+					      svg_length_t width, svg_length_t height,
+					      svg_filter_in_t in, int in_op_reference,
+					      svg_filter_in_t in2, int in2_op_reference,
+					      feBlendMode_t mode);
+svg_status_t _svg_android_add_filter_feComposite (void *closure,
+						  svg_length_t x, svg_length_t y,
+						  svg_length_t width, svg_length_t height,
+						  feCompositeOperator_t oprt,
+						  svg_filter_in_t in, int in_op_reference,
+						  svg_filter_in_t in2, int in2_op_reference,
+						  double k1, double k2, double k3, double k4);
+svg_status_t _svg_android_add_filter_feFlood (void *closure,
+					      svg_length_t x, svg_length_t y,
+					      svg_length_t width, svg_length_t height,
+					      svg_filter_in_t in, int in_op_reference,
+					      svg_color_t color, double opacity);
+svg_status_t _svg_android_add_filter_feGaussianBlur (void *closure,
+						     svg_length_t x, svg_length_t y,
+						     svg_length_t width, svg_length_t height,
+						     svg_filter_in_t in, int in_op_reference,
+						     double std_dev_x, double std_dev_y);
+svg_status_t _svg_android_add_filter_feOffset (void *closure,
+					       svg_length_t x, svg_length_t y,
+					       svg_length_t width, svg_length_t height,
+					       svg_filter_in_t in, int in_op_reference,
+					       double dx, double dy);
+
+svg_status_t _svg_android_apply_clip_box (void *closure,
+					  svg_length_t *x,
+					  svg_length_t *y,
+					  svg_length_t *width,
+					  svg_length_t *height);
+
 svg_status_t
 _svg_android_transform (void *closure,
 			double a, double b,
