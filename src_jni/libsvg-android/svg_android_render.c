@@ -134,9 +134,7 @@ _svg_android_begin_group (void *closure, double opacity)
 							 svg_android->state->viewport_width,
 							 svg_android->state->viewport_height);
 		ANDROID_FILL_BITMAP(svg_android, offscreen_bitmap, opacity_i);
-
-		svg_android->state->offscreen_bitmap = offscreen_bitmap;
-	} else svg_android->state->offscreen_bitmap = NULL;
+	}
 
 	_svg_android_push_state (svg_android, offscreen_bitmap, NULL);
 
@@ -180,9 +178,6 @@ _svg_android_end_group (void *closure, double opacity)
 	svg_android_t *svg_android = closure;
 
 	DEBUG_ENTRY("end_group");
-	if (opacity != 1.0) {
-		ANDROID_DRAW_BITMAP2(svg_android, svg_android->state->offscreen_bitmap, 0.0f, 0.0f);
-	}
 
 	_svg_android_pop_state (svg_android);
 
@@ -1023,6 +1018,7 @@ _svg_android_push_state (svg_android_t     *svg_android,
 	}
 	else
 	{
+		svg_android->state->offscreen_bitmap = offscreen_bitmap;
 		if (offscreen_bitmap)
 		{
 			jobject new_canvas = ANDROID_CANVAS_CREATE(svg_android, offscreen_bitmap);
@@ -1045,12 +1041,18 @@ _svg_android_pop_state (svg_android_t *svg_android)
 {
 
 	DEBUG_ENTRY("pop_state");
+
 	svg_android->state = _svg_android_state_pop (svg_android->state);
 
 	if (svg_android->state && svg_android->state->saved_canvas) {
 		svg_android->canvas = svg_android->state->saved_canvas;
 		svg_android->state->saved_canvas = NULL;
 	}
+
+	if (svg_android->state && svg_android->state->offscreen_bitmap) {
+		ANDROID_DRAW_BITMAP2(svg_android, svg_android->state->offscreen_bitmap, 0.0f, 0.0f);
+	}
+
 	DEBUG_EXIT("pop_state");
 
 	return SVG_STATUS_SUCCESS;
