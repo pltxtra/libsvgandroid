@@ -1,22 +1,22 @@
 /* svg_path.c: Data structures for SVG paths
- 
+
    Copyright © 2002 USC/Information Sciences Institute
-  
+
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public License as
    published by the Free Software Foundation; either version 2 of the
    License, or (at your option) any later version.
-  
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
    Library General Public License for more details.
-  
+
    You should have received a copy of the GNU Library General Public
    License along with this program; if not, write to the
    Free Software Foundation, Inc., 59 Temple Place - Suite 330,
    Boston, MA 02111-1307, USA.
-  
+
    Author: Carl Worth <cworth@isi.edu>
 */
 
@@ -34,7 +34,7 @@ typedef struct svg_path_cmd_info {
     int num_args;
     svg_path_cmd_t cmd;
 } svg_path_cmd_info_t;
-    
+
 #define SVG_PATH_CMD_MAX_ARGS 7
 
 /* This must be in the same order and include at least all values in
@@ -153,10 +153,10 @@ _svg_ellipse_init (svg_ellipse_t *ellipse)
 }
 
 svg_status_t _svg_ellipse_init_copy (svg_ellipse_t *ellipse, svg_ellipse_t *other) {
-	*ellipse = *other;	
+	*ellipse = *other;
 	return SVG_STATUS_SUCCESS;
 }
- 
+
 svg_status_t
 _svg_line_init (svg_line_t *line)
 {
@@ -169,7 +169,7 @@ _svg_line_init (svg_line_t *line)
 }
 
 svg_status_t _svg_line_init_copy (svg_line_t *line, svg_line_t *other) {
-     *line = *other;  
+     *line = *other;
      return SVG_STATUS_SUCCESS;
 }
 
@@ -188,7 +188,7 @@ _svg_rect_init (svg_rect_element_t *rect)
 
 svg_status_t _svg_rect_init_copy (svg_rect_element_t *rect,
 				  svg_rect_element_t *other) {
-	*rect = *other;	
+	*rect = *other;
 	return SVG_STATUS_SUCCESS;
 }
 
@@ -202,30 +202,25 @@ svg_status_t _svg_path_init_copy (svg_path_t *path,
 	   render_engine so that the 4 relevant fields here made part of a
 	   new path_interpreter struct */
 	static svg_render_engine_t svg_path_copy_engine = {
-		NULL, NULL, NULL, NULL,
-		(svg_status_t (*) (void *, double, double)) _svg_path_move_to,
-		(svg_status_t (*) (void *, double, double)) _svg_path_line_to,
-		(svg_status_t (*) (void *,
-				   double, double,
-				   double, double,
-				   double, double)) _svg_path_curve_to,
-		(svg_status_t (*) (void *,
-				   double, double,
-				   double, double)) _svg_path_quadratic_curve_to,
-		(svg_status_t (*) (void *,
-				   double, double, double,
-				   int, int,
-				   double, double)) _svg_path_arc_to,
-		(svg_status_t (*) (void *)) _svg_path_close_path,
-		NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-		NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-		NULL, NULL, NULL, NULL, NULL, NULL,
-		_svg_path_do_nothing, // <-- the render_path() function should point to "do_nothing" since we don't WANT to render anything here..
-		NULL, NULL, NULL, NULL, NULL
+		.move_to = (svg_status_t (*) (void *, double, double)) _svg_path_move_to,
+		.line_to = (svg_status_t (*) (void *, double, double)) _svg_path_line_to,
+		.curve_to = (svg_status_t (*) (void *,
+					       double, double,
+					       double, double,
+					       double, double)) _svg_path_curve_to,
+		.quadratic_curve_to = (svg_status_t (*) (void *,
+							 double, double,
+							 double, double)) _svg_path_quadratic_curve_to,
+		.arc_to = (svg_status_t (*) (void *,
+					     double, double, double,
+					     int, int,
+					     double, double)) _svg_path_arc_to,
+		.close_path = (svg_status_t (*) (void *)) _svg_path_close_path,
+		.render_path = _svg_path_do_nothing, // <-- the render_path() function should point to "do_nothing" since we don't WANT to render anything here..
 	};
-	
+
 	_svg_path_init (path);
-	
+
 	return _svg_path_render (other, &svg_path_copy_engine, path, 0);
 }
 
@@ -263,7 +258,7 @@ _svg_path_destroy (svg_render_engine_t *engine, void *closure, svg_path_t *path)
 
     if(path->cache)
 	    engine->free_path_cache(closure, path->cache);
-    
+
     status = _svg_path_deinit (path);
 
     free (path);
@@ -289,7 +284,7 @@ _svg_path_render (svg_path_t		*path,
 	    for (op_buf = path->op_head; op_buf; op_buf = op_buf->next) {
 		    for (i=0; i < op_buf->num_ops; i++) {
 			    op = op_buf->op[i];
-			    
+
 			    for (j=0; j < SVG_PATH_CMD_INFO[op].num_args; j++) {
 				    arg[j] = arg_buf->arg[buf_i];
 				    buf_i++;
@@ -298,7 +293,7 @@ _svg_path_render (svg_path_t		*path,
 					    buf_i = 0;
 				    }
 			    }
-			    
+
 			    switch (op) {
 			    case SVG_PATH_OP_MOVE_TO:
 				    status = (engine->move_to) (closure, arg[0], arg[1]);
@@ -358,7 +353,7 @@ _svg_path_apply_attributes (svg_path_t		*path,
 	if (status)
 	    return status;
     }
-    
+
     return SVG_STATUS_SUCCESS;
 }
 
