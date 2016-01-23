@@ -1018,6 +1018,9 @@ _svg_android_push_state (svg_android_t     *svg_android,
 	}
 	else
 	{
+		if((svg_android->state = _svg_android_state_push (svg_android, svg_android->state, path_cache)) == NULL)
+			return SVG_STATUS_NO_MEMORY;
+
 		svg_android->state->offscreen_bitmap = offscreen_bitmap;
 		if (offscreen_bitmap)
 		{
@@ -1028,8 +1031,6 @@ _svg_android_push_state (svg_android_t     *svg_android,
 
 			_svg_android_copy_canvas_state (svg_android);
 		}
-		if((svg_android->state = _svg_android_state_push (svg_android, svg_android->state, path_cache)) == NULL)
-			return SVG_STATUS_NO_MEMORY;
 	}
 
 	DEBUG_EXIT("push_state");
@@ -1042,8 +1043,6 @@ _svg_android_pop_state (svg_android_t *svg_android)
 
 	DEBUG_ENTRY("pop_state");
 
-	svg_android->state = _svg_android_state_pop (svg_android->state);
-
 	if (svg_android->state && svg_android->state->saved_canvas) {
 		svg_android->canvas = svg_android->state->saved_canvas;
 		svg_android->state->saved_canvas = NULL;
@@ -1052,6 +1051,8 @@ _svg_android_pop_state (svg_android_t *svg_android)
 	if (svg_android->state && svg_android->state->offscreen_bitmap) {
 		ANDROID_DRAW_BITMAP2(svg_android, svg_android->state->offscreen_bitmap, 0.0f, 0.0f);
 	}
+
+	svg_android->state = _svg_android_state_pop (svg_android->state);
 
 	DEBUG_EXIT("pop_state");
 
