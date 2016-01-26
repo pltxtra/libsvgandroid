@@ -304,31 +304,31 @@ typedef struct svg_render_engine {
     /* filter */
     svg_status_t (* begin_filter) (void *closure, const char* id);
     svg_status_t (* add_filter_feBlend) (void *closure,
-					 svg_length_t x, svg_length_t y,
-					 svg_length_t width, svg_length_t height,
+					 svg_length_t* x, svg_length_t* y,
+					 svg_length_t* width, svg_length_t* height,
 					 svg_filter_in_t in, int in_op_reference,
 					 svg_filter_in_t in2, int in2_op_reference,
 					 feBlendMode_t mode);
     svg_status_t (* add_filter_feComposite) (void *closure,
-					     svg_length_t x, svg_length_t y,
-					     svg_length_t width, svg_length_t height,
+					     svg_length_t* x, svg_length_t* y,
+					     svg_length_t* width, svg_length_t* height,
 					     feCompositeOperator_t oprt,
 					     svg_filter_in_t in, int in_op_reference,
 					     svg_filter_in_t in2, int in2_op_reference,
 					     double k1, double k2, double k3, double k4);
     svg_status_t (* add_filter_feFlood) (void *closure,
-					 svg_length_t x, svg_length_t y,
-					 svg_length_t width, svg_length_t height,
+					 svg_length_t* x, svg_length_t* y,
+					 svg_length_t* width, svg_length_t* height,
 					 svg_filter_in_t in, int in_op_reference,
-					 svg_color_t color, double opacity);
+					 const svg_color_t* color, double opacity);
     svg_status_t (* add_filter_feGaussianBlur) (void *closure,
-						svg_length_t x, svg_length_t y,
-						svg_length_t width, svg_length_t height,
+						svg_length_t* x, svg_length_t* y,
+						svg_length_t* width, svg_length_t* height,
 						svg_filter_in_t in, int in_op_reference,
 						double std_dev_x, double std_dev_y);
     svg_status_t (* add_filter_feOffset) (void *closure,
-					  svg_length_t x, svg_length_t y,
-					  svg_length_t width, svg_length_t height,
+					  svg_length_t* x, svg_length_t* y,
+					  svg_length_t* width, svg_length_t* height,
 					  svg_filter_in_t in, int in_op_reference,
 					  double dx, double dy);
 

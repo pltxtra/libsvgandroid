@@ -171,7 +171,7 @@ _svg_style_init_empty (svg_style_t *style, svg_t *svg)
     style->stroke_miter_limit = 4.0;
     style->stroke_opacity = 1.0;
     style->fill_opacity = 1.0;
-    style->filter_element = NULL;
+    style->filter = NULL;
 
     /* opacity is not inherited */
     style->flags |= SVG_STYLE_FLAG_OPACITY;
@@ -361,9 +361,13 @@ _svg_style_parse_filter (svg_style_t *style, const char *str)
     style->flags |= SVG_STYLE_FLAG_FILTER;
 
     if(strcmp ("inherit", str) == 0)
-	style->filter_element = NULL;
-    else
-	stat = _svg_fetch_element_by_id (style->svg, str, &style->filter_element);
+	style->filter = "inherit";
+    else {
+	svg_element_t *el;
+	stat = _svg_fetch_element_by_id (style->svg, str, &el);
+	if(!stat && el != NULL)
+	    style->filter = el->id;
+    }
 
     return stat;
 }
@@ -880,6 +884,12 @@ _svg_style_render (svg_style_t		*style,
 
     if (style->flags & SVG_STYLE_FLAG_OPACITY) {
 	status = (engine->set_opacity) (closure, style->opacity);
+	if (status)
+	    return status;
+    }
+
+    if (style->flags & SVG_STYLE_FLAG_FILTER) {
+	status = (engine->set_filter) (closure, style->filter);
 	if (status)
 	    return status;
     }

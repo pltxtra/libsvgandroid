@@ -46,10 +46,152 @@ _svg_filter_deinit(svg_filter_t *filter) {
 	return SVG_STATUS_SUCCESS;
 }
 
+static inline void _svg_filter_render_feBlend(
+	svg_filter_t* filter,
+	svg_filter_primitive_t* prim,
+	svg_render_engine_t* engine,
+	void* closure) {
+	engine->add_filter_feBlend(
+		closure,
+		&prim->x, &prim->y,
+		&prim->width, &prim->height,
+		prim->in, prim->in_ref ? prim->in_ref->primitive_order : -1,
+		prim->p.fe_blend.in2, prim->p.fe_blend.in2_ref ? prim->p.fe_blend.in2_ref->primitive_order : -1,
+		prim->p.fe_blend.mode);
+}
+
+static inline void _svg_filter_render_feComposite(
+	svg_filter_t* filter,
+	svg_filter_primitive_t* prim,
+	svg_render_engine_t* engine,
+	void* closure) {
+	engine->add_filter_feComposite(
+		closure,
+		&prim->x, &prim->y,
+		&prim->width, &prim->height,
+		prim->p.fe_composite.oprt,
+		prim->in,
+		prim->in_ref ? prim->in_ref->primitive_order : -1,
+		prim->p.fe_composite.in2,
+		prim->p.fe_composite.in2_ref ? prim->p.fe_composite.in2_ref->primitive_order : -1,
+		prim->p.fe_composite.k1,
+		prim->p.fe_composite.k2,
+		prim->p.fe_composite.k3,
+		prim->p.fe_composite.k4
+		);
+}
+
+static inline void _svg_filter_render_feFlood(
+	svg_filter_t* filter,
+	svg_filter_primitive_t* prim,
+	svg_render_engine_t* engine,
+	void* closure) {
+	engine->add_filter_feFlood(
+		closure,
+		&prim->x, &prim->y,
+		&prim->width, &prim->height,
+		prim->in,
+		prim->in_ref ? prim->in_ref->primitive_order : -1,
+		&prim->p.fe_flood.color,
+		prim->p.fe_flood.opacity
+		);
+}
+
+static inline void _svg_filter_render_feGaussianBlur(
+	svg_filter_t* filter,
+	svg_filter_primitive_t* prim,
+	svg_render_engine_t* engine,
+	void* closure) {
+	engine->add_filter_feGaussianBlur(
+		closure,
+		&prim->x, &prim->y,
+		&prim->width, &prim->height,
+		prim->in,
+		prim->in_ref ? prim->in_ref->primitive_order : -1,
+		prim->p.fe_gaussian_blur.std_dev_x,
+		prim->p.fe_gaussian_blur.std_dev_y
+		);
+}
+
+static inline void _svg_filter_render_feOffset(
+	svg_filter_t* filter,
+	svg_filter_primitive_t* prim,
+	svg_render_engine_t* engine,
+	void* closure) {
+	engine->add_filter_feOffset(
+		closure,
+		&prim->x, &prim->y,
+		&prim->width, &prim->height,
+		prim->in,
+		prim->in_ref ? prim->in_ref->primitive_order : -1,
+		prim->p.fe_offset.dx,
+		prim->p.fe_offset.dy
+		);
+}
+
 svg_status_t
 _svg_filter_render (svg_filter_t* filter,
 		    svg_render_engine_t* engine,
 		    void* closure) {
+	if(filter->flag_dirty) {
+		/* There has been a modification
+		 * to this filter since the
+		 * last render cycle - we need
+		 * to update the engine.
+		 */
+		engine->begin_filter(closure, filter->id);
+
+		svg_filter_primitive_t* prim = filter->first_primitive;
+
+		while(prim != NULL) {
+
+			switch(prim->fe_operation) {
+			case op_feBlend:
+				_svg_filter_render_feBlend(filter, prim, engine, closure);
+				break;
+			case op_feColorMatrix:
+				break;
+			case op_feComponentTransfer:
+				break;
+			case op_feComposite:
+				_svg_filter_render_feComposite(filter, prim, engine, closure);
+				break;
+			case op_feConvolveMatrix:
+				break;
+			case op_feDiffuseLighting:
+				break;
+			case op_feDisplacementMap:
+				break;
+			case op_feFlood:
+				_svg_filter_render_feFlood(filter, prim, engine, closure);
+				break;
+			case op_feGaussianBlur:
+				_svg_filter_render_feGaussianBlur(filter, prim, engine, closure);
+				break;
+			case op_feImage:
+				break;
+			case op_feMerge:
+				break;
+			case op_feMorphology:
+				break;
+			case op_feOffset:
+				_svg_filter_render_feOffset(filter, prim, engine, closure);
+				break;
+			case op_feSpecularLighting:
+				break;
+			case op_feTile:
+				break;
+			case op_feTurbulence:
+				break;
+			}
+
+			prim = prim->next;
+		}
+
+		/* unset the flag */
+		filter->flag_dirty = 0;
+	}
+
 	return SVG_STATUS_SUCCESS;
 }
 
@@ -66,6 +208,7 @@ _svg_parser_parse_filter (svg_parser_t *parser,
 	/* The only thing that distinguishes a group from a leaf is that
 	   the group becomes the new parent for future elements. */
 	parser->state->filter_element = *filter_element;
+	(*filter_element)->e.filter.id = (*filter_element)->id;
 
 	SVG_DEBUG("_svg_parser_parse_filter() created new Filter element.\n");
 
@@ -156,6 +299,7 @@ static svg_filter_primitive_t* parse_filter_primitive (svg_parser_t *parser,
 	}
 
 	filter_element->e.filter.last_primitive = fprim;
+	filter_element->e.filter.flag_dirty = 1;
 
 	SVG_DEBUG("parse_filter_primitive() called.\n");
 

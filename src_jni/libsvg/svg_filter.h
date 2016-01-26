@@ -153,11 +153,14 @@ extern "C" {
 	} svg_filter_primitive_t;
 
 	typedef struct svg_filter {
+		int flag_dirty; /* indicate change since last render cycle */
+
 		int number_of_primitives; /* no primitives == 0 */
 
 		svg_filter_primitive_t *last_primitive;
 		svg_filter_primitive_t *first_primitive;
 		StrHmap* results;
+		const char *id;
 	} svg_filter_t;
 
 

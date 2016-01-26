@@ -125,7 +125,9 @@ struct svg_android {
 	JNIEnv *env;
 
 	jobject canvas; // android canvas reference
+	jobject filter; // filter management object
 
+	jclass filter_clazz; // com/toolkits/libsvgandroid/Filter
 	jclass canvas_clazz; // android Canvas class
 	jclass raster_clazz; // android SvgRaster class
 	jclass bitmap_clazz; // android Bitmap class
@@ -134,6 +136,16 @@ struct svg_android {
 	jclass path_clazz;   // android path class
 	jclass paint_clazz; // android paint class
 	jclass dashPathEffect_clazz; // android paint dash effect class
+
+	/* com/toolkits/libsvgandroid/Filter references */
+	jmethodID create_filter;
+	jmethodID begin_filter;
+	jmethodID set_filter;
+	jmethodID add_filter_feBlend;
+	jmethodID add_filter_feComposite;
+	jmethodID add_filter_feFlood;
+	jmethodID add_filter_feGaussianBlur;
+	jmethodID add_filter_feOffset;
 
 	/* android canvas method references */
 	jmethodID canvas_constructor;
@@ -486,31 +498,31 @@ svg_status_t _svg_android_set_filter (void *closure, const char* id);
 
 svg_status_t _svg_android_begin_filter (void *closure, const char* id);
 svg_status_t _svg_android_add_filter_feBlend (void *closure,
-					      svg_length_t x, svg_length_t y,
-					      svg_length_t width, svg_length_t height,
+					      svg_length_t* x, svg_length_t* y,
+					      svg_length_t* width, svg_length_t* height,
 					      svg_filter_in_t in, int in_op_reference,
 					      svg_filter_in_t in2, int in2_op_reference,
 					      feBlendMode_t mode);
 svg_status_t _svg_android_add_filter_feComposite (void *closure,
-						  svg_length_t x, svg_length_t y,
-						  svg_length_t width, svg_length_t height,
+						  svg_length_t* x, svg_length_t* y,
+						  svg_length_t* width, svg_length_t* height,
 						  feCompositeOperator_t oprt,
 						  svg_filter_in_t in, int in_op_reference,
 						  svg_filter_in_t in2, int in2_op_reference,
 						  double k1, double k2, double k3, double k4);
 svg_status_t _svg_android_add_filter_feFlood (void *closure,
-					      svg_length_t x, svg_length_t y,
-					      svg_length_t width, svg_length_t height,
+					      svg_length_t* x, svg_length_t* y,
+					      svg_length_t* width, svg_length_t* height,
 					      svg_filter_in_t in, int in_op_reference,
-					      svg_color_t color, double opacity);
+					      const svg_color_t* color, double opacity);
 svg_status_t _svg_android_add_filter_feGaussianBlur (void *closure,
-						     svg_length_t x, svg_length_t y,
-						     svg_length_t width, svg_length_t height,
+						     svg_length_t* x, svg_length_t* y,
+						     svg_length_t* width, svg_length_t* height,
 						     svg_filter_in_t in, int in_op_reference,
 						     double std_dev_x, double std_dev_y);
 svg_status_t _svg_android_add_filter_feOffset (void *closure,
-					       svg_length_t x, svg_length_t y,
-					       svg_length_t width, svg_length_t height,
+					       svg_length_t* x, svg_length_t* y,
+					       svg_length_t* width, svg_length_t* height,
 					       svg_filter_in_t in, int in_op_reference,
 					       double dx, double dy);
 

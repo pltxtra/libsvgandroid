@@ -42,3 +42,15 @@
 #define SVG_ANDROID_DEBUG(_fmt, ...)
 
 #endif
+
+#ifdef ANDROID
+
+#include <android/log.h>
+#define SVG_ANDROID_ERROR(...)       __android_log_print(ANDROID_LOG_INFO, "SVG_ANDROID", __VA_ARGS__)
+
+#else
+
+#include <stdio.h>
+#define SVG_ANDROID_ERROR(...)  printf(__VA_ARGS__)
+
+#endif
