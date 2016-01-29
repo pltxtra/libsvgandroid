@@ -33,63 +33,65 @@
 
 #include <android/log.h>
 
+#include "svg_android_debug.h"
+
 svg_render_engine_t SVG_ANDROID_RENDER_ENGINE = {
 	/* hierarchy */
-	_svg_android_begin_group,
-	_svg_android_begin_element,
-	_svg_android_end_element,
-	_svg_android_end_group,
+	.begin_group = _svg_android_begin_group,
+	.begin_element = _svg_android_begin_element,
+	.end_element = _svg_android_end_element,
+	.end_group = _svg_android_end_group,
 	/* path creation */
-	_svg_android_move_to,
-	_svg_android_line_to,
-	_svg_android_curve_to,
-	_svg_android_quadratic_curve_to,
-	_svg_android_arc_to,
-	_svg_android_close_path,
-	_svg_android_free_path_cache,
+	.move_to = _svg_android_move_to,
+	.line_to = _svg_android_line_to,
+	.curve_to = _svg_android_curve_to,
+	.quadratic_curve_to = _svg_android_quadratic_curve_to,
+	.arc_to = _svg_android_arc_to,
+	.close_path = _svg_android_close_path,
+	.free_path_cache = _svg_android_free_path_cache,
 	/* style */
-	_svg_android_set_color,
-	_svg_android_set_fill_opacity,
-	_svg_android_set_fill_paint,
-	_svg_android_set_fill_rule,
-	_svg_android_set_font_family,
-	_svg_android_set_font_size,
-	_svg_android_set_font_style,
-	_svg_android_set_font_weight,
-	_svg_android_set_opacity,
-	_svg_android_set_stroke_dash_array,
-	_svg_android_set_stroke_dash_offset,
-	_svg_android_set_stroke_line_cap,
-	_svg_android_set_stroke_line_join,
-	_svg_android_set_stroke_miter_limit,
-	_svg_android_set_stroke_opacity,
-	_svg_android_set_stroke_paint,
-	_svg_android_set_stroke_width,
-	_svg_android_set_text_anchor,
-	_svg_android_set_filter,
+	.set_color = _svg_android_set_color,
+	.set_fill_opacity = _svg_android_set_fill_opacity,
+	.set_fill_paint = _svg_android_set_fill_paint,
+	.set_fill_rule = _svg_android_set_fill_rule,
+	.set_font_family = _svg_android_set_font_family,
+	.set_font_size = _svg_android_set_font_size,
+	.set_font_style = _svg_android_set_font_style,
+	.set_font_weight = _svg_android_set_font_weight,
+	.set_opacity = _svg_android_set_opacity,
+	.set_stroke_dash_array = _svg_android_set_stroke_dash_array,
+	.set_stroke_dash_offset = _svg_android_set_stroke_dash_offset,
+	.set_stroke_line_cap = _svg_android_set_stroke_line_cap,
+	.set_stroke_line_join = _svg_android_set_stroke_line_join,
+	.set_stroke_miter_limit = _svg_android_set_stroke_miter_limit,
+	.set_stroke_opacity = _svg_android_set_stroke_opacity,
+	.set_stroke_paint = _svg_android_set_stroke_paint,
+	.set_stroke_width = _svg_android_set_stroke_width,
+	.set_text_anchor = _svg_android_set_text_anchor,
+	.set_filter = _svg_android_set_filter,
 	/* filter */
-	_svg_android_begin_filter,
-	_svg_android_add_filter_feBlend,
-	_svg_android_add_filter_feComposite,
-	_svg_android_add_filter_feFlood,
-	_svg_android_add_filter_feGaussianBlur,
-	_svg_android_add_filter_feOffset,
+	.begin_filter = _svg_android_begin_filter,
+	.add_filter_feBlend = _svg_android_add_filter_feBlend,
+	.add_filter_feComposite = _svg_android_add_filter_feComposite,
+	.add_filter_feFlood = _svg_android_add_filter_feFlood,
+	.add_filter_feGaussianBlur = _svg_android_add_filter_feGaussianBlur,
+	.add_filter_feOffset = _svg_android_add_filter_feOffset,
 	/* transform */
-	_svg_android_apply_clip_box,
-	_svg_android_transform,
-	_svg_android_apply_view_box,
-	_svg_android_set_viewport_dimension,
+	.apply_clip_box = _svg_android_apply_clip_box,
+	.transform = _svg_android_transform,
+	.apply_view_box = _svg_android_apply_view_box,
+	.set_viewport_dimension = _svg_android_set_viewport_dimension,
 
 	/* drawing */
-	_svg_android_render_line,
-	_svg_android_render_path,
-	_svg_android_render_ellipse,
-	_svg_android_render_rect,
-	_svg_android_render_text,
-	_svg_android_render_image,
+	.render_line = _svg_android_render_line,
+	.render_path = _svg_android_render_path,
+	.render_ellipse = _svg_android_render_ellipse,
+	.render_rect = _svg_android_render_rect,
+	.render_text = _svg_android_render_text,
+	.render_image = _svg_android_render_image,
 
 	/* get bounding box of last drawing, in pixels */
-	_svg_android_get_last_bounding_box
+	.get_last_bounding_box = _svg_android_get_last_bounding_box
 };
 
 svg_android_status_t svgAndroidDestroy(svg_android_t *svg_android) {
@@ -570,6 +572,11 @@ svg_status_t svgAndroidRender
 
 	svg_android->fit_to_area = 0;
 	svg_status_t return_status = svg_render (svg_android->svg, &SVG_ANDROID_RENDER_ENGINE, svg_android);
+
+	SVG_ANDROID_ERROR("SVG Android Engine = %p\n",
+			  &SVG_ANDROID_RENDER_ENGINE);
+	SVG_ANDROID_ERROR("SVG_ANDROID_RENDER_ENGINE.add_filter_feFlood = %p\n",
+			  SVG_ANDROID_RENDER_ENGINE.add_filter_feFlood);
 
 	(void) _svg_android_pop_state (svg_android);
 

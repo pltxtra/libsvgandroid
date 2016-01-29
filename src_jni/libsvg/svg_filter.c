@@ -36,6 +36,7 @@ _svg_filter_init(svg_filter_t *filter) {
 	}
 	filter->last_primitive = NULL;
 	filter->first_primitive = NULL;
+	filter->flag_dirty = 1; // we start off dirty..
 
 	return SVG_STATUS_SUCCESS;
 }
@@ -86,6 +87,8 @@ static inline void _svg_filter_render_feFlood(
 	svg_filter_primitive_t* prim,
 	svg_render_engine_t* engine,
 	void* closure) {
+	SVG_DEBUG("will call engine->add_filter_feFlood() -- %p -> %p\n",
+		  engine, engine->add_filter_feFlood);
 	engine->add_filter_feFlood(
 		closure,
 		&prim->x, &prim->y,
@@ -133,55 +136,78 @@ svg_status_t
 _svg_filter_render (svg_filter_t* filter,
 		    svg_render_engine_t* engine,
 		    void* closure) {
+	SVG_DEBUG("_svg_filter_render() -- dirty? %d\n", filter->flag_dirty);
 	if(filter->flag_dirty) {
 		/* There has been a modification
 		 * to this filter since the
 		 * last render cycle - we need
 		 * to update the engine.
 		 */
-		engine->begin_filter(closure, filter->id);
+		engine->begin_filter(closure, filter->element->id);
 
 		svg_filter_primitive_t* prim = filter->first_primitive;
 
+		SVG_DEBUG("_svg_filter_render() -- prim: %p\n", prim);
 		while(prim != NULL) {
 
+			SVG_DEBUG("_svg_filter_render() -- %p operation: %d\n",
+				  prim, prim->fe_operation);
 			switch(prim->fe_operation) {
 			case op_feBlend:
+				SVG_DEBUG("_svg_filter_render() -- feBlend\n");
 				_svg_filter_render_feBlend(filter, prim, engine, closure);
 				break;
 			case op_feColorMatrix:
+				SVG_DEBUG("_svg_filter_render() -- feColorMatrix\n");
 				break;
 			case op_feComponentTransfer:
+				SVG_DEBUG("_svg_filter_render() -- feComponentTransfer\n");
 				break;
 			case op_feComposite:
+				SVG_DEBUG("_svg_filter_render() -- feComposite\n");
 				_svg_filter_render_feComposite(filter, prim, engine, closure);
 				break;
 			case op_feConvolveMatrix:
+				SVG_DEBUG("_svg_filter_render() -- feConvolveMatrix\n");
 				break;
 			case op_feDiffuseLighting:
+				SVG_DEBUG("_svg_filter_render() -- feDiffuseLighting\n");
 				break;
 			case op_feDisplacementMap:
+				SVG_DEBUG("_svg_filter_render() -- feDisplacementMap\n");
 				break;
 			case op_feFlood:
+				SVG_DEBUG("_svg_filter_render() -- feFlood\n");
 				_svg_filter_render_feFlood(filter, prim, engine, closure);
 				break;
 			case op_feGaussianBlur:
+				SVG_DEBUG("_svg_filter_render() -- feGaussianBlur\n");
 				_svg_filter_render_feGaussianBlur(filter, prim, engine, closure);
 				break;
 			case op_feImage:
+				SVG_DEBUG("_svg_filter_render() -- feImage\n");
 				break;
 			case op_feMerge:
+				SVG_DEBUG("_svg_filter_render() -- feMerge\n");
 				break;
 			case op_feMorphology:
+				SVG_DEBUG("_svg_filter_render() -- feMorphology\n");
 				break;
 			case op_feOffset:
+				SVG_DEBUG("_svg_filter_render() -- feOffset\n");
 				_svg_filter_render_feOffset(filter, prim, engine, closure);
 				break;
 			case op_feSpecularLighting:
+				SVG_DEBUG("_svg_filter_render() -- feSpecularLighting\n");
 				break;
 			case op_feTile:
+				SVG_DEBUG("_svg_filter_render() -- feTile\n");
 				break;
 			case op_feTurbulence:
+				SVG_DEBUG("_svg_filter_render() -- feTurbulence\n");
+				break;
+			default:
+				SVG_ERROR("_svg_filter_render() -- unknown filter operation.\n");
 				break;
 			}
 
@@ -208,9 +234,10 @@ _svg_parser_parse_filter (svg_parser_t *parser,
 	/* The only thing that distinguishes a group from a leaf is that
 	   the group becomes the new parent for future elements. */
 	parser->state->filter_element = *filter_element;
-	(*filter_element)->e.filter.id = (*filter_element)->id;
+	(*filter_element)->e.filter.element = (*filter_element);
 
-	SVG_DEBUG("_svg_parser_parse_filter() created new Filter element.\n");
+	SVG_DEBUG("_svg_parser_parse_filter() created new Filter element (%p, %s, %d).\n",
+		  (*filter_element), (*filter_element)->id, status);
 
 	return status;
 }

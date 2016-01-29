@@ -208,7 +208,7 @@ typedef struct svg_style {
     svg_paint_t				stroke_paint;
     svg_length_t			stroke_width;
 
-    const char*				filter; /* NULL, "inherit" or id of filter element */
+    svg_element_t*			filter_element; /* NULL == "inherit" or pointer to filter element */
 
     svg_color_t				color;
     svg_text_anchor_t			text_anchor;

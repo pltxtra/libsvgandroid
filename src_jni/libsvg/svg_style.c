@@ -171,7 +171,7 @@ _svg_style_init_empty (svg_style_t *style, svg_t *svg)
     style->stroke_miter_limit = 4.0;
     style->stroke_opacity = 1.0;
     style->fill_opacity = 1.0;
-    style->filter = NULL;
+    style->filter_element = NULL;
 
     /* opacity is not inherited */
     style->flags |= SVG_STYLE_FLAG_OPACITY;
@@ -360,13 +360,30 @@ _svg_style_parse_filter (svg_style_t *style, const char *str)
 
     style->flags |= SVG_STYLE_FLAG_FILTER;
 
+    SVG_ERROR("_svg_style_parse_filter(%s)\n", str);
+
     if(strcmp ("inherit", str) == 0)
-	style->filter = "inherit";
+	style->filter_element = NULL;
     else {
-	svg_element_t *el;
-	stat = _svg_fetch_element_by_id (style->svg, str, &el);
-	if(!stat && el != NULL)
-	    style->filter = el->id;
+	char bfr[strlen(str) + 1];
+	memcpy(bfr, str, sizeof(bfr));
+	char* end = strchr(bfr,  ')');
+	if(strncmp("url(#", bfr, 5) != 0 || end == NULL)
+	    return SVG_STATUS_PARSE_ERROR;
+
+	SVG_ERROR("_svg_style_parse_filter()  --> %s\n", bfr);
+
+	char *id = &bfr[5]; // 5 is the char after the #
+	end[0] = '\0'; // swap the ) for null termination
+
+	SVG_ERROR("_svg_style_parse_filter()  --> 2 %s\n", id);
+
+	stat = _svg_fetch_element_by_id (style->svg, id, &(style->filter_element));
+	if(!(!stat && style->filter_element != NULL && style->filter_element->type == SVG_ELEMENT_TYPE_FILTER)) {
+	    style->flags &= ~SVG_STYLE_FLAG_FILTER;
+	    style->filter_element = NULL;
+	}
+	SVG_ERROR("_svg_style_parse_filter()  --> 3 complete -- %p\n", style);
     }
 
     return stat;
@@ -889,7 +906,21 @@ _svg_style_render (svg_style_t		*style,
     }
 
     if (style->flags & SVG_STYLE_FLAG_FILTER) {
-	status = (engine->set_filter) (closure, style->filter);
+	const char* flt = "inherit";
+
+	SVG_ERROR("_svg_style_render(FILTER) - %p\n", style->filter_element);
+
+	if(style->filter_element) {
+	    SVG_ERROR("_svg_style_render(FILTER) - %s\n", style->filter_element->id);
+	    status = _svg_filter_render (&(style->filter_element->e.filter), engine, closure);
+	    SVG_ERROR("_svg_style_render(FILTER) - status %d\n", status);
+	    if (status)
+		return status;
+	    flt = style->filter_element->id;
+	}
+	SVG_ERROR("_svg_style_render(FILTER) - flt %s\n", flt);
+
+	status = (engine->set_filter) (closure, flt);
 	if (status)
 	    return status;
     }

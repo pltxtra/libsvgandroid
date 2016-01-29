@@ -26,6 +26,8 @@
  */
 
 #include "svg-android-internal.h"
+
+#define __DO_SVG_ANDROID_DEBUG
 #include "svg_android_debug.h"
 
 static int prep_filter(JNIEnv* env, svg_android_t* svg_android) {
@@ -136,7 +138,15 @@ static int prep_filter(JNIEnv* env, svg_android_t* svg_android) {
 
 	if(svg_android->filter == NULL) {
 		SVG_ANDROID_ERROR(
-			"svg_android_filter.c:prep_filter() - could not filter object.\n");
+			"svg_android_filter.c:prep_filter() - could not create filter object.\n");
+		return -1;
+	}
+
+	svg_android->filter = (jobject)((*env)->NewGlobalRef(env, (jobject)svg_android->filter));
+
+	if(svg_android->filter == NULL) {
+		SVG_ANDROID_ERROR(
+			"svg_android_filter.c:prep_filter() - could not create global reference for object.\n");
 		return -1;
 	}
 
@@ -149,6 +159,10 @@ svg_status_t _svg_android_set_filter (void *closure, const char* id) {
 
 	if(svg_android->filter == NULL && prep_filter(env, svg_android))
 		return SVG_ANDROID_STATUS_NO_MEMORY;
+
+	SVG_ANDROID_DEBUG("_svg_android_set_filter(%p, %s)\n", closure, id);
+	SVG_ANDROID_DEBUG(" --- _svg_android_add_filter_feFlood = %p\n",
+			  _svg_android_add_filter_feFlood);
 
 	(*env)->CallVoidMethod(env,
 			       svg_android->filter,
@@ -211,6 +225,8 @@ svg_status_t _svg_android_add_filter_feBlend (void *closure,
 					      feBlendMode_t mode) {
 	svg_android_t* svg_android = closure;
 	JNIEnv* env = svg_android->env;
+
+	SVG_ANDROID_DEBUG("_svg_android_add_filter_feBlend()\n");
 
 	if(svg_android->filter == NULL && prep_filter(env, svg_android))
 		return SVG_ANDROID_STATUS_NO_MEMORY;

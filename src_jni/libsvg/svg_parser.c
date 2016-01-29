@@ -28,6 +28,7 @@
 
 #include "svgint.h"
 #include "svg_parser.h"
+#include "svg_debug.h"
 
 static svg_status_t
 _svg_parser_push_state (svg_parser_t		*parser,

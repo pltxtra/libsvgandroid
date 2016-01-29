@@ -366,9 +366,6 @@ svg_element_render (svg_element_t		*element,
 	case SVG_ELEMENT_TYPE_SYMBOL:
 	    status = _svg_symbol_render (element, engine, closure);
 	    break;
-	case SVG_ELEMENT_TYPE_FILTER:
-	    status = _svg_filter_render (&element->e.filter, engine, closure);
-	    break;
 	default:
 	    status = SVGINT_STATUS_UNKNOWN_ELEMENT;
 	    break;
@@ -696,6 +693,9 @@ _svg_element_apply_attributes (svg_element_t	*element,
 	break;
     case SVG_ELEMENT_TYPE_PATTERN:
 	status = _svg_pattern_apply_attributes (&element->e.pattern, attributes);
+	break;
+    case SVG_ELEMENT_TYPE_FILTER:
+	status = SVG_STATUS_SUCCESS;
 	break;
     default:
 	status = SVGINT_STATUS_UNKNOWN_ELEMENT;

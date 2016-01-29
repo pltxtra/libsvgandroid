@@ -160,7 +160,7 @@ extern "C" {
 		svg_filter_primitive_t *last_primitive;
 		svg_filter_primitive_t *first_primitive;
 		StrHmap* results;
-		const char *id;
+		svg_element_t* element;
 	} svg_filter_t;
 
 

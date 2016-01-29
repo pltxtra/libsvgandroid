@@ -44,11 +44,11 @@ public class Filter {
 	}
 
 	public void setFilter(String name) {
-		Log.v("Kamoflage", "Filter.java:Filter.setFilter()");
+		Log.v("Kamoflage", "Filter.java:Filter.setFilter(" + name + ")");
 	}
 
 	public void beginFilter(String name) {
-		Log.v("Kamoflage", "Filter.java:Filter.beginFilter()");
+		Log.v("Kamoflage", "Filter.java:Filter.beginFilter(" + name + ")");
 	}
 
 	public void addFilter_feBlend(int  x, int y, int width, int height, int in, int in2, int mode) {
