@@ -277,6 +277,54 @@ svg_status_t _svg_android_add_filter_feComposite (void *closure,
 						  svg_filter_in_t in, int in_op_reference,
 						  svg_filter_in_t in2, int in2_op_reference,
 						  double k1, double k2, double k3, double k4) {
+	svg_android_t* svg_android = closure;
+	JNIEnv* env = svg_android->env;
+
+	SVG_ANDROID_DEBUG("_svg_android_add_filter_feComposite()\n");
+
+	if(svg_android->filter == NULL && prep_filter(env, svg_android))
+		return SVG_ANDROID_STATUS_NO_MEMORY;
+
+	double __x, __y, __w, __h;
+	_svg_android_length_to_pixel (svg_android, x, &__x);
+	_svg_android_length_to_pixel (svg_android, y, &__y);
+	_svg_android_length_to_pixel (svg_android, width, &__w);
+	_svg_android_length_to_pixel (svg_android, height, &__h);
+
+	int __in = in2int(in, in_op_reference);
+	int __in2 = in2int(in2, in2_op_reference);
+
+	int boprt = -1;
+	switch(oprt) {
+	case feComposite_over:
+		boprt = 1;
+		break;
+	case feComposite_in:
+		boprt = 2;
+		break;
+	case feComposite_out:
+		boprt = 3;
+		break;
+	case feComposite_atop:
+		boprt = 4;
+		break;
+	case feComposite_xor:
+		boprt = 5;
+		break;
+	case feComposite_arithmetic:
+		boprt = 6;
+		break;
+	}
+
+	(*env)->CallVoidMethod(env,
+			       svg_android->filter,
+			       svg_android->add_filter_feComposite,
+			       (int)__x, (int)__y, (int)__w, (int)__h,
+			       boprt,
+			       __in, __in2,
+			       k1, k2, k3, k4
+		);
+
 	return SVG_ANDROID_STATUS_SUCCESS;
 }
 
@@ -285,6 +333,31 @@ svg_status_t _svg_android_add_filter_feFlood (void *closure,
 					      svg_length_t* width, svg_length_t* height,
 					      svg_filter_in_t in, int in_op_reference,
 					      const svg_color_t* color, double opacity) {
+	svg_android_t* svg_android = closure;
+	JNIEnv* env = svg_android->env;
+
+	SVG_ANDROID_DEBUG("_svg_android_add_filter_feFlood()\n");
+
+	if(svg_android->filter == NULL && prep_filter(env, svg_android))
+		return SVG_ANDROID_STATUS_NO_MEMORY;
+
+	double __x, __y, __w, __h;
+	_svg_android_length_to_pixel (svg_android, x, &__x);
+	_svg_android_length_to_pixel (svg_android, y, &__y);
+	_svg_android_length_to_pixel (svg_android, width, &__w);
+	_svg_android_length_to_pixel (svg_android, height, &__h);
+
+	int __in = in2int(in, in_op_reference);
+	int _color = (0x00ffffff) & (color->rgb);
+
+	(*env)->CallVoidMethod(env,
+			       svg_android->filter,
+			       svg_android->add_filter_feFlood,
+			       (int)__x, (int)__y, (int)__w, (int)__h,
+			       __in,
+			       _color, opacity
+		);
+
 	return SVG_ANDROID_STATUS_SUCCESS;
 }
 
@@ -293,6 +366,30 @@ svg_status_t _svg_android_add_filter_feGaussianBlur (void *closure,
 						     svg_length_t* width, svg_length_t* height,
 						     svg_filter_in_t in, int in_op_reference,
 						     double std_dev_x, double std_dev_y) {
+	svg_android_t* svg_android = closure;
+	JNIEnv* env = svg_android->env;
+
+	SVG_ANDROID_DEBUG("_svg_android_add_filter_feGaussianBlur()\n");
+
+	if(svg_android->filter == NULL && prep_filter(env, svg_android))
+		return SVG_ANDROID_STATUS_NO_MEMORY;
+
+	double __x, __y, __w, __h;
+	_svg_android_length_to_pixel (svg_android, x, &__x);
+	_svg_android_length_to_pixel (svg_android, y, &__y);
+	_svg_android_length_to_pixel (svg_android, width, &__w);
+	_svg_android_length_to_pixel (svg_android, height, &__h);
+
+	int __in = in2int(in, in_op_reference);
+
+	(*env)->CallVoidMethod(env,
+			       svg_android->filter,
+			       svg_android->add_filter_feGaussianBlur,
+			       (int)__x, (int)__y, (int)__w, (int)__h,
+			       __in,
+			       std_dev_x, std_dev_y
+		);
+
 	return SVG_ANDROID_STATUS_SUCCESS;
 }
 
@@ -301,5 +398,29 @@ svg_status_t _svg_android_add_filter_feOffset (void *closure,
 					       svg_length_t* width, svg_length_t* height,
 					       svg_filter_in_t in, int in_op_reference,
 					       double dx, double dy) {
+	svg_android_t* svg_android = closure;
+	JNIEnv* env = svg_android->env;
+
+	SVG_ANDROID_DEBUG("_svg_android_add_filter_feBlend()\n");
+
+	if(svg_android->filter == NULL && prep_filter(env, svg_android))
+		return SVG_ANDROID_STATUS_NO_MEMORY;
+
+	double __x, __y, __w, __h;
+	_svg_android_length_to_pixel (svg_android, x, &__x);
+	_svg_android_length_to_pixel (svg_android, y, &__y);
+	_svg_android_length_to_pixel (svg_android, width, &__w);
+	_svg_android_length_to_pixel (svg_android, height, &__h);
+
+	int __in = in2int(in, in_op_reference);
+
+	(*env)->CallVoidMethod(env,
+			       svg_android->filter,
+			       svg_android->add_filter_feOffset,
+			       (int)__x, (int)__y, (int)__w, (int)__h,
+			       __in,
+			       dx, dy
+		);
+
 	return SVG_ANDROID_STATUS_SUCCESS;
 }

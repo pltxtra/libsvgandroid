@@ -60,23 +60,23 @@ public class Filter {
 					  double k1, double k2,
 					  double k3, double k4
 		) {
-		Log.v("Kamoflage", "Filter.java:Filter.addFilter_feBlend()");
+		Log.v("Kamoflage", "Filter.java:Filter.addFilter_feComposite()");
 	}
 
 	public void addFilter_feFlood(int  x, int y, int width, int height, int in,
 				      int color, double opacity) {
-		Log.v("Kamoflage", "Filter.java:Filter.addFilter_feBlend()");
+		Log.v("Kamoflage", "Filter.java:Filter.addFilter_feFlood()");
 	}
 
 	public void addFilter_feGaussianBlur(int  x, int y, int width, int height,
 					     int in,
 					     double std_dev_x, double std_dev_y) {
-		Log.v("Kamoflage", "Filter.java:Filter.addFilter_feBlend()");
+		Log.v("Kamoflage", "Filter.java:Filter.addFilter_feGaussianBlur()");
 	}
 
 	public void addFilter_feOffset(int  x, int y, int width, int height,
 				       int in, double dx, double dy) {
-		Log.v("Kamoflage", "Filter.java:Filter.addFilter_feBlend()");
+		Log.v("Kamoflage", "Filter.java:Filter.addFilter_feOffset()");
 	}
 
 }
