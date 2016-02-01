@@ -59,10 +59,12 @@ typedef struct svg_android_state {
 	// this we need for the arc_to implementation...
 	double last_x, last_y;
 
+	jobject filter_source_bitmap;
 	jobject offscreen_bitmap;
 
 	svg_bounding_box_t bounding_box;
 
+	jobject saved_filter_canvas; // temporary canvas
 	jobject saved_canvas; // temporary canvas
 
 	jobject path;       // this can point to either the state_path or a cached object

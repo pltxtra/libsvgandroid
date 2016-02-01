@@ -44,6 +44,9 @@
 #define DEBUG_EXIT(s)
 #endif
 
+//#define __DO_SVG_ANDROID_DEBUG
+#include "svg_android_debug.h"
+
 static svg_android_state_t *state_store = NULL;
 static size_t state_store_level = 0, state_store_depth = 0;
 
@@ -61,10 +64,10 @@ static int dig_stack_deeper() {
 	if(new_store_depth == 0) new_store_depth = 10; // default
 
 	svg_android_state_t *new_stack = NULL;
-		
+
 	if(state_store == NULL) {
 		new_stack = (svg_android_state_t *)calloc(sizeof(svg_android_state_t), new_store_depth);
-	} else {	
+	} else {
 		new_stack = (svg_android_state_t *)realloc(state_store, sizeof(svg_android_state_t) * new_store_depth);
 	}
 
@@ -85,11 +88,11 @@ static svg_android_status_t pop_state_store(svg_android_state_t **_state, svg_an
 	svg_android_state_t *state = NULL;
 	if(state_store_level == state_store_depth)
 		if(dig_stack_deeper()) return SVG_ANDROID_STATUS_NO_MEMORY; // failure
-	
+
 	state = &state_store[state_store_level++];
-	
+
 	/******** set initial values, the missing stuff is filled in by copy and/or init *****/
-	
+
 	/* trust libsvg to set all of these to reasonable defaults:
 	   state->fill_paint;
 	   state->stroke_paint;
@@ -110,8 +113,8 @@ static svg_android_status_t pop_state_store(svg_android_state_t **_state, svg_an
 	state->bounding_box.left = -1;
 	state->bounding_box.top = -1;
 	state->bounding_box.right = 0;
-	state->bounding_box.bottom = 0;	
-	
+	state->bounding_box.bottom = 0;
+
 	state->dash = NULL;
 	state->num_dashes = 0;
 	state->dash_offset = 0;
@@ -156,9 +159,9 @@ static svg_android_status_t pop_state_store(svg_android_state_t **_state, svg_an
 		DEBUG_ANDROID1("   path after clear %p", state->state_path);
 	}
 	state->path = state->state_path;
-	
+
 	*_state = state;
-	
+
 	return SVG_ANDROID_STATUS_SUCCESS;
 }
 
@@ -175,23 +178,23 @@ static svg_android_status_t push_state_store() {
 
 svg_android_status_t
 _svg_android_state_init (svg_android_state_t *state)
-{	
+{
 	DEBUG_ANDROID(" ");
 	DEBUG_ANDROID("-----------------------------");
 	DEBUG_ANDROID1("        init for state pointer %p", state);
 	DEBUG_ANDROID1("Created global refs for path at %p", state->path);
 	DEBUG_ANDROID1("Created global refs for paint at %p", state->paint);
 	DEBUG_ANDROID1("Created global refs for matrix at %p", state->matrix);
-	
+
 	ANDROID_SET_ANTIALIAS(state->instance, state->paint, state->instance->do_antialias);
-	
+
 	// this might already be set by copy
 	if(state->font_family == NULL) {
 		state->font_family = strdup (SVG_ANDROID_FONT_FAMILY_DEFAULT);
 		if (state->font_family == NULL)
 			return SVG_ANDROID_STATUS_NO_MEMORY;
 	}
-	
+
 	return SVG_ANDROID_STATUS_SUCCESS;
 }
 
@@ -206,7 +209,7 @@ _svg_android_state_init_copy (svg_android_state_t *state, const svg_android_stat
 	jobject state_paint = state->paint;
 	jobject state_path = state->path;
 	jobject state_state_path = state->state_path;
-	
+
 	// copy all fields as-is
 	*state = *other;
 
@@ -220,11 +223,15 @@ _svg_android_state_init_copy (svg_android_state_t *state, const svg_android_stat
 	state->bounding_box.left = -1;
 	state->bounding_box.top = -1;
 	state->bounding_box.right = 0;
-	state->bounding_box.bottom = 0;	
-	
+	state->bounding_box.bottom = 0;
+
 	/* We don't need our own child_surface or saved cr at this point. */
 	state->offscreen_bitmap = NULL;
 	state->saved_canvas = NULL;
+
+	/* We must clear the filter related saved canvas/bitmap */
+	state->filter_source_bitmap = NULL;
+	state->saved_filter_canvas = NULL;
 
 	// copy paint
 	ANDROID_PAINT_SET(state->instance, state->paint, other->paint);
@@ -244,7 +251,10 @@ _svg_android_state_init_copy (svg_android_state_t *state, const svg_android_stat
 	state->viewport_width = other->viewport_width;
 	state->viewport_height = other->viewport_height;
 
-	// Create a copy of the dash 
+	SVG_ANDROID_DEBUG("state_init_copy(%p -> %p) - w: %f, h: %f\n",
+			  other, state, state->viewport_width, state->viewport_height);
+
+	// Create a copy of the dash
 	if (other->dash) {
 		state->dash = malloc (state->num_dashes * sizeof(double));
 		if (state->dash == NULL)
@@ -289,7 +299,7 @@ _svg_android_state_destroy (svg_android_state_t *state)
 {
 	_svg_android_state_deinit (state);
 
-	(*(state->instance->env))->PopLocalFrame(state->instance->env, NULL);	
+	(*(state->instance->env))->PopLocalFrame(state->instance->env, NULL);
 
 	return push_state_store();
 }
@@ -301,7 +311,7 @@ _svg_android_state_push (svg_android_t *instance, svg_android_state_t *state, jo
 
 	// create basic state
 	if(pop_state_store(&new, instance) != SVG_ANDROID_STATUS_SUCCESS)
-		return NULL;	
+		return NULL;
 
 	DEBUG_ANDROID1("   path just after pop_state_store %p", new->path);
 
@@ -316,12 +326,12 @@ _svg_android_state_push (svg_android_t *instance, svg_android_state_t *state, jo
 	// if path_cache is defined, use it
 	if(path_cache)
 		new->path = path_cache;
-	
+
 	DEBUG_ANDROID1("   path just after init %p", new->path);
 
 	// point to next
 	new->next = state;
-	
+
 	DEBUG_ANDROID("-------STATE PUSH!! ----------------------");
 	DEBUG_ANDROID1("RETURNING global refs for path at %p", new->path);
 	DEBUG_ANDROID1("RETURNING global refs for state_path at %p", new->state_path);
@@ -359,7 +369,7 @@ _svg_android_state_pop (svg_android_state_t *state)
 
 	if(next != NULL)
 		_svg_android_update_bounding_box(&(next->bounding_box), &(state->bounding_box));
-	
+
 	(void) _svg_android_state_destroy (state);
 
 	return next;

@@ -169,6 +169,8 @@ svg_status_t _svg_android_set_filter (void *closure, const char* id) {
 			       svg_android->set_filter,
 			       (*env)->NewStringUTF(env, id));
 
+	_svg_android_prepare_filter(svg_android);
+
 	return SVG_ANDROID_STATUS_SUCCESS;
 }
 

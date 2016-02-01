@@ -76,10 +76,11 @@ _svg_android_set_viewport_dimension (void *closure,
 	svg_android_t *svg_android = closure;
 	double vwidth, vheight;
 
-	DEBUG_ENTRY("set_viewpoert_dimension");
-
 	_svg_android_length_to_pixel (svg_android, width, &vwidth);
 	_svg_android_length_to_pixel (svg_android, height, &vheight);
+
+	SVG_ANDROID_ERROR("_svg_android_set_viewpoert_dimension(%f, %f)\n",
+			  vwidth, vheight);
 
 	svg_android->state->viewport_width  = vwidth;
 	svg_android->state->viewport_height = vheight;
@@ -131,8 +132,8 @@ _svg_android_begin_group (void *closure, double opacity)
 		opacity_i = ((opacity_i & 0xff) << 24) & 0xffffffff;
 
 		offscreen_bitmap = ANDROID_CREATE_BITMAP(svg_android,
-							 svg_android->state->viewport_width,
-							 svg_android->state->viewport_height);
+							 (int)svg_android->state->viewport_width,
+							 (int)svg_android->state->viewport_height);
 		ANDROID_FILL_BITMAP(svg_android, offscreen_bitmap, opacity_i);
 	}
 
@@ -140,6 +141,37 @@ _svg_android_begin_group (void *closure, double opacity)
 
 	DEBUG_EXIT("begin_group");
 	return SVG_ANDROID_STATUS_SUCCESS;
+}
+
+void
+_svg_android_prepare_filter (svg_android_t* svg_android) {
+	SVG_ANDROID_DEBUG("_svg_android_prepare_filter(%p, state: %p) - w: %f, h: %f\n",
+			  svg_android,
+			  svg_android->state,
+			  svg_android->state->viewport_width,
+			  svg_android->state->viewport_height);
+
+	svg_android->state->filter_source_bitmap = ANDROID_CREATE_BITMAP(svg_android,
+									 (int)svg_android->state->viewport_width,
+									 (int)svg_android->state->viewport_height);
+
+	jobject new_canvas = ANDROID_CANVAS_CREATE(
+		svg_android, svg_android->state->filter_source_bitmap);
+
+	svg_android->state->saved_filter_canvas = svg_android->canvas;
+	svg_android->canvas = new_canvas;
+
+	_svg_android_copy_canvas_state (svg_android);
+}
+
+void
+_svg_android_execute_filter (svg_android_t* svg_android) {
+	if(svg_android->state && svg_android->state->saved_filter_canvas) {
+		svg_android->canvas = svg_android->state->saved_filter_canvas;
+		svg_android->state->saved_filter_canvas = NULL;
+		ANDROID_DRAW_BITMAP2(svg_android,
+				     svg_android->state->filter_source_bitmap, 0.0f, 0.0f);
+	}
 }
 
 /* XXX: begin_element could be made more efficient in that no extra
@@ -1042,6 +1074,8 @@ _svg_android_pop_state (svg_android_t *svg_android)
 {
 
 	DEBUG_ENTRY("pop_state");
+
+	_svg_android_execute_filter(svg_android);
 
 	if (svg_android->state && svg_android->state->saved_canvas) {
 		svg_android->canvas = svg_android->state->saved_canvas;
