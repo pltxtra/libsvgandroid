@@ -243,4 +243,8 @@ public class Filter {
 						 in, dx, dy));
 		}
 	}
+
+	public void execute(Canvas canvas, Bitmap source) {
+		Log.v("Kamoflage", "Filter.java:Filter.execute()");
+	}
 }

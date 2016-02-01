@@ -132,6 +132,17 @@ static int prep_filter(JNIEnv* env, svg_android_t* svg_android) {
 		return -1;
 	}
 
+	svg_android->filter_execute = (*env)->GetMethodID(
+		env,
+		svg_android->filter_clazz, "execute",
+		"(Landroid/graphics/Canvas;Landroid/graphics/Bitmap;)V");
+
+	if(svg_android->filter_execute == NULL) {
+		SVG_ANDROID_ERROR(
+			"svg_android_filter.c:prep_filter() - could not get Filter::execute().\n");
+		return -1;
+	}
+
 	svg_android->filter = (*env)->CallStaticObjectMethod(env,
 							     svg_android->filter_clazz,
 							     svg_android->create_filter);
@@ -425,4 +436,46 @@ svg_status_t _svg_android_add_filter_feOffset (void *closure,
 		);
 
 	return SVG_ANDROID_STATUS_SUCCESS;
+}
+
+void
+_svg_android_prepare_filter (svg_android_t* svg_android) {
+	SVG_ANDROID_DEBUG("_svg_android_prepare_filter(%p, state: %p) - w: %f, h: %f\n",
+			  svg_android,
+			  svg_android->state,
+			  svg_android->state->viewport_width,
+			  svg_android->state->viewport_height);
+
+	svg_android->state->filter_source_bitmap = ANDROID_CREATE_BITMAP(svg_android,
+									 (int)svg_android->state->viewport_width,
+									 (int)svg_android->state->viewport_height);
+
+	ANDROID_FILL_BITMAP(svg_android, svg_android->state->filter_source_bitmap, 0x00000000);
+	jobject new_canvas = ANDROID_CANVAS_CREATE(
+		svg_android, svg_android->state->filter_source_bitmap);
+
+	svg_android->state->saved_filter_canvas = svg_android->canvas;
+	svg_android->canvas = new_canvas;
+
+	_svg_android_copy_canvas_state (svg_android);
+}
+
+void
+_svg_android_execute_filter (svg_android_t* svg_android) {
+	JNIEnv* env = svg_android->env;
+
+	if(svg_android->state && svg_android->state->saved_filter_canvas) {
+		svg_android->canvas = svg_android->state->saved_filter_canvas;
+		svg_android->state->saved_filter_canvas = NULL;
+
+		(*env)->CallVoidMethod(env,
+				       svg_android->filter,
+				       svg_android->filter_execute,
+				       svg_android->canvas,
+				       svg_android->state->filter_source_bitmap
+			);
+
+		ANDROID_DRAW_BITMAP2(svg_android,
+				     svg_android->state->filter_source_bitmap, 0.0f, 0.0f);
+	}
 }

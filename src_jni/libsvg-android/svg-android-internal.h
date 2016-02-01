@@ -148,6 +148,7 @@ struct svg_android {
 	jmethodID add_filter_feFlood;
 	jmethodID add_filter_feGaussianBlur;
 	jmethodID add_filter_feOffset;
+	jmethodID filter_execute;
 
 	/* android canvas method references */
 	jmethodID canvas_constructor;
@@ -626,6 +627,12 @@ _svg_android_select_font (svg_android_t *svg_android);
 
 void
 _svg_android_copy_canvas_state (svg_android_t *svg_android);
+
+void
+_svg_android_prepare_filter (svg_android_t* svg_android);
+
+void
+_svg_android_execute_filter (svg_android_t* svg_android);
 
 #ifdef __cplusplus
 }

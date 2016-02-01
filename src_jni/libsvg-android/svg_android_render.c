@@ -31,6 +31,8 @@
 #include "svg-android-internal.h"
 #include "math.h"
 
+#include "svg_filter.h"
+
 //#define __DO_SVG_ANDROID_DEBUG
 #include "svg_android_debug.h"
 
@@ -141,37 +143,6 @@ _svg_android_begin_group (void *closure, double opacity)
 
 	DEBUG_EXIT("begin_group");
 	return SVG_ANDROID_STATUS_SUCCESS;
-}
-
-void
-_svg_android_prepare_filter (svg_android_t* svg_android) {
-	SVG_ANDROID_DEBUG("_svg_android_prepare_filter(%p, state: %p) - w: %f, h: %f\n",
-			  svg_android,
-			  svg_android->state,
-			  svg_android->state->viewport_width,
-			  svg_android->state->viewport_height);
-
-	svg_android->state->filter_source_bitmap = ANDROID_CREATE_BITMAP(svg_android,
-									 (int)svg_android->state->viewport_width,
-									 (int)svg_android->state->viewport_height);
-
-	jobject new_canvas = ANDROID_CANVAS_CREATE(
-		svg_android, svg_android->state->filter_source_bitmap);
-
-	svg_android->state->saved_filter_canvas = svg_android->canvas;
-	svg_android->canvas = new_canvas;
-
-	_svg_android_copy_canvas_state (svg_android);
-}
-
-void
-_svg_android_execute_filter (svg_android_t* svg_android) {
-	if(svg_android->state && svg_android->state->saved_filter_canvas) {
-		svg_android->canvas = svg_android->state->saved_filter_canvas;
-		svg_android->state->saved_filter_canvas = NULL;
-		ANDROID_DRAW_BITMAP2(svg_android,
-				     svg_android->state->filter_source_bitmap, 0.0f, 0.0f);
-	}
 }
 
 /* XXX: begin_element could be made more efficient in that no extra
