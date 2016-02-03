@@ -35,6 +35,7 @@ import android.graphics.LinearGradient;
 import android.graphics.RadialGradient;
 import android.graphics.Typeface;
 import android.util.Log;
+import android.app.Activity;
 import android.renderscript.*;
 
 import java.util.ArrayList;
@@ -44,6 +45,12 @@ import java.util.HashMap;
 
 public class Filter {
 
+	static Activity current_activity;
+
+	static public void setActivity(Activity crnt) {
+		current_activity = crnt;
+	}
+
 	interface feBaseOperation {
 		public void execute(FilterStack fstack);
 	}
@@ -51,15 +58,26 @@ public class Filter {
 	class FilterStack {
 		public RenderScript rs;
 		public List<feBaseOperation> operations;
+		public Canvas canvas;
+		public Bitmap source;
 
 		public FilterStack() {
 			operations = new ArrayList<feBaseOperation>();
+			rs = RenderScript.create(current_activity);
+			Log.v("Kamoflage", "Filter.java:FilterStack.FilterStack() - rs created");
 		}
 
 		public void add(feBaseOperation fe) {
 			operations.add(fe);
 		}
 
+		public void execute(Canvas _canvas, Bitmap _source) {
+			canvas = _canvas;
+			source = _source;
+			for(feBaseOperation op : operations) {
+				op.execute(this);
+			}
+		}
 	}
 
 	class feBlend implements feBaseOperation {
@@ -246,5 +264,8 @@ public class Filter {
 
 	public void execute(Canvas canvas, Bitmap source) {
 		Log.v("Kamoflage", "Filter.java:Filter.execute()");
+		if(current != null) {
+			current.execute(canvas, source);
+		}
 	}
 }
