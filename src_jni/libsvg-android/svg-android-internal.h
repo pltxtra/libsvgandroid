@@ -61,6 +61,7 @@ typedef struct svg_android_state {
 
 	jobject filter_source_bitmap;
 	jobject offscreen_bitmap;
+	jobject background_bitmap;
 
 	svg_bounding_box_t bounding_box;
 

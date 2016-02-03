@@ -135,7 +135,7 @@ static int prep_filter(JNIEnv* env, svg_android_t* svg_android) {
 	svg_android->filter_execute = (*env)->GetMethodID(
 		env,
 		svg_android->filter_clazz, "execute",
-		"(Landroid/graphics/Canvas;Landroid/graphics/Bitmap;)V");
+		"(Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;)V");
 
 	if(svg_android->filter_execute == NULL) {
 		SVG_ANDROID_ERROR(
@@ -471,7 +471,7 @@ _svg_android_execute_filter (svg_android_t* svg_android) {
 		(*env)->CallVoidMethod(env,
 				       svg_android->filter,
 				       svg_android->filter_execute,
-				       svg_android->canvas,
+				       svg_android->state->background_bitmap,
 				       svg_android->state->filter_source_bitmap
 			);
 

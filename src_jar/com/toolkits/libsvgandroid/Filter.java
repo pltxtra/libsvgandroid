@@ -58,7 +58,7 @@ public class Filter {
 	class FilterStack {
 		public RenderScript rs;
 		public List<feBaseOperation> operations;
-		public Canvas canvas;
+		public Bitmap background;
 		public Bitmap source;
 
 		public FilterStack() {
@@ -71,8 +71,8 @@ public class Filter {
 			operations.add(fe);
 		}
 
-		public void execute(Canvas _canvas, Bitmap _source) {
-			canvas = _canvas;
+		public void execute(Bitmap _background, Bitmap _source) {
+			background = _background;
 			source = _source;
 			for(feBaseOperation op : operations) {
 				op.execute(this);
@@ -262,10 +262,10 @@ public class Filter {
 		}
 	}
 
-	public void execute(Canvas canvas, Bitmap source) {
+	public void execute(Bitmap background, Bitmap source) {
 		Log.v("Kamoflage", "Filter.java:Filter.execute()");
 		if(current != null) {
-			current.execute(canvas, source);
+			current.execute(background, source);
 		}
 	}
 }

@@ -1017,6 +1017,8 @@ _svg_android_push_state (svg_android_t     *svg_android,
 	svg_android->state->offscreen_bitmap = offscreen_bitmap;
 	if (offscreen_bitmap)
 	{
+		svg_android->state->background_bitmap = offscreen_bitmap;
+
 		jobject new_canvas = ANDROID_CANVAS_CREATE(svg_android, offscreen_bitmap);
 
 		svg_android->state->saved_canvas = svg_android->canvas;
