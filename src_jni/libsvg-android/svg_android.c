@@ -566,17 +566,22 @@ svg_status_t svgAndroidRender
 {
 	__prepare_android_interface(svg_android, env, android_canvas);
 
-	_svg_android_push_state (svg_android, NULL, NULL);
-	svg_android->state->viewport_width = ANDROID_GET_WIDTH(svg_android);
-	svg_android->state->viewport_height = ANDROID_GET_HEIGHT(svg_android);
+	int width = ANDROID_GET_WIDTH(svg_android);
+	int height = ANDROID_GET_HEIGHT(svg_android);
+	svg_android->viewport_width = width;
+	svg_android->viewport_height = height;
+
+	/* we always need a valid bitmap, since we must pass it
+	 * as the background when processing filters
+	 */
+	jobject offscreen_bitmap = ANDROID_CREATE_BITMAP(svg_android, width, height);
+	ANDROID_FILL_BITMAP(svg_android, offscreen_bitmap, 0x00000000);
+
+	/* create initial state */
+	_svg_android_push_state (svg_android, offscreen_bitmap, NULL);
 
 	svg_android->fit_to_area = 0;
 	svg_status_t return_status = svg_render (svg_android->svg, &SVG_ANDROID_RENDER_ENGINE, svg_android);
-
-	SVG_ANDROID_ERROR("SVG Android Engine = %p\n",
-			  &SVG_ANDROID_RENDER_ENGINE);
-	SVG_ANDROID_ERROR("SVG_ANDROID_RENDER_ENGINE.add_filter_feFlood = %p\n",
-			  SVG_ANDROID_RENDER_ENGINE.add_filter_feFlood);
 
 	(void) _svg_android_pop_state (svg_android);
 
@@ -594,9 +599,6 @@ svg_status_t svgAndroidRenderToArea(JNIEnv *env, svg_android_t *svg_android, job
 	__prepare_android_interface(svg_android, env, android_canvas);
 
 	_svg_android_push_state (svg_android, NULL, NULL);
-
-	svg_android->state->viewport_width = w;
-	svg_android->state->viewport_height = h;
 
 	svg_android->fit_to_area = -1;
 	svg_android->fit_to_x = x;

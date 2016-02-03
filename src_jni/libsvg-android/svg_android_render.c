@@ -1011,30 +1011,20 @@ _svg_android_push_state (svg_android_t     *svg_android,
 			 jobject path_cache)
 {
 	DEBUG_ENTRY("push_state");
-	if (svg_android->state == NULL)
+	if((svg_android->state = _svg_android_state_push (svg_android, svg_android->state, path_cache)) == NULL)
+		return SVG_STATUS_NO_MEMORY;
+
+	svg_android->state->offscreen_bitmap = offscreen_bitmap;
+	if (offscreen_bitmap)
 	{
-		if((svg_android->state = _svg_android_state_push (svg_android, NULL, path_cache)) == NULL)
-			return SVG_STATUS_NO_MEMORY;
+		jobject new_canvas = ANDROID_CANVAS_CREATE(svg_android, offscreen_bitmap);
 
-		svg_android->state->viewport_width = svg_android->viewport_width;
-		svg_android->state->viewport_height = svg_android->viewport_height;
+		svg_android->state->saved_canvas = svg_android->canvas;
+		svg_android->canvas = new_canvas;
+
+		_svg_android_copy_canvas_state (svg_android);
 	}
-	else
-	{
-		if((svg_android->state = _svg_android_state_push (svg_android, svg_android->state, path_cache)) == NULL)
-			return SVG_STATUS_NO_MEMORY;
 
-		svg_android->state->offscreen_bitmap = offscreen_bitmap;
-		if (offscreen_bitmap)
-		{
-			jobject new_canvas = ANDROID_CANVAS_CREATE(svg_android, offscreen_bitmap);
-
-			svg_android->state->saved_canvas = svg_android->canvas;
-			svg_android->canvas = new_canvas;
-
-			_svg_android_copy_canvas_state (svg_android);
-		}
-	}
 
 	DEBUG_EXIT("push_state");
 	return SVG_STATUS_SUCCESS;

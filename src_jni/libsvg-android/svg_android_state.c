@@ -323,6 +323,12 @@ _svg_android_state_push (svg_android_t *instance, svg_android_state_t *state, jo
 	// initialize the rest
 	_svg_android_state_init (new);
 
+	// set initial viewport if we don't have a previous state
+	if(state == NULL) {
+		new->viewport_width = instance->viewport_width;
+		new->viewport_height = instance->viewport_height;
+	}
+
 	// if path_cache is defined, use it
 	if(path_cache)
 		new->path = path_cache;
