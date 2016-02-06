@@ -133,6 +133,10 @@ _svg_android_begin_group (void *closure, double opacity)
 		jint opacity_i = opacity;
 		opacity_i = ((opacity_i & 0xff) << 24) & 0xffffffff;
 
+		SVG_ANDROID_ERROR("_svg_android_begin_group() --> offscreen: (%d, %d)\n",
+				  (int)svg_android->state->viewport_width,
+				  (int)svg_android->state->viewport_height);
+
 		offscreen_bitmap = ANDROID_CREATE_BITMAP(svg_android,
 							 (int)svg_android->state->viewport_width,
 							 (int)svg_android->state->viewport_height);

@@ -135,7 +135,7 @@ static int prep_filter(JNIEnv* env, svg_android_t* svg_android) {
 	svg_android->filter_execute = (*env)->GetMethodID(
 		env,
 		svg_android->filter_clazz, "execute",
-		"(Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;)V");
+		"(Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;)Landroid/graphics/Bitmap;");
 
 	if(svg_android->filter_execute == NULL) {
 		SVG_ANDROID_ERROR(
@@ -382,7 +382,8 @@ svg_status_t _svg_android_add_filter_feGaussianBlur (void *closure,
 	svg_android_t* svg_android = closure;
 	JNIEnv* env = svg_android->env;
 
-	SVG_ANDROID_DEBUG("_svg_android_add_filter_feGaussianBlur()\n");
+	SVG_ANDROID_DEBUG("_svg_android_add_filter_feGaussianBlur(%f, %f)\n",
+			  std_dev_x, std_dev_y);
 
 	if(svg_android->filter == NULL && prep_filter(env, svg_android))
 		return SVG_ANDROID_STATUS_NO_MEMORY;
@@ -465,17 +466,26 @@ _svg_android_execute_filter (svg_android_t* svg_android) {
 	JNIEnv* env = svg_android->env;
 
 	if(svg_android->state && svg_android->state->saved_filter_canvas) {
+		SVG_ANDROID_DEBUG("_svg_android_execute_filter()\n");
+
 		svg_android->canvas = svg_android->state->saved_filter_canvas;
 		svg_android->state->saved_filter_canvas = NULL;
 
-		(*env)->CallVoidMethod(env,
-				       svg_android->filter,
-				       svg_android->filter_execute,
-				       svg_android->state->background_bitmap,
-				       svg_android->state->filter_source_bitmap
+		SVG_ANDROID_DEBUG("_svg_android_execute_filter() - B\n");
+
+		jobject final_bitmap = (*env)->CallObjectMethod(
+			env,
+			svg_android->filter,
+			svg_android->filter_execute,
+			svg_android->state->background_bitmap,
+			svg_android->state->filter_source_bitmap
 			);
 
+		SVG_ANDROID_DEBUG("_svg_android_execute_filter() - C\n");
+
 		ANDROID_DRAW_BITMAP2(svg_android,
-				     svg_android->state->filter_source_bitmap, 0.0f, 0.0f);
+				     final_bitmap, 0.0f, 0.0f);
+
+		SVG_ANDROID_DEBUG("_svg_android_execute_filter() - D\n");
 	}
 }

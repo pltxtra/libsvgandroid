@@ -497,8 +497,16 @@ _svg_parser_parse_feGaussianBlur (svg_parser_t *parser,
 	/* get the Gaussian attributes */
 	const char* deviation_str;
 	double d_x = 0.0, d_y = 0.0;
-	if (_svg_attribute_get_string (attributes, "deviation", &deviation_str, "0") == SVG_STATUS_SUCCESS) {
-		(void) sscanf(deviation_str, "%lf %lf", &d_x, &d_y);
+	if (_svg_attribute_get_string (attributes, "stdDeviation", &deviation_str, "0") == SVG_STATUS_SUCCESS) {
+		switch(sscanf(deviation_str, "%lf %lf", &d_x, &d_y)) {
+		case 2:
+			break;
+		case 1:
+			d_y = d_x;
+			break;
+		case 0:
+			d_y  = d_x = 0.0;
+		}
 	}
 
 	fprim->p.fe_gaussian_blur.std_dev_x = d_x;

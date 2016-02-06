@@ -53,36 +53,184 @@ public class Filter {
 
 	interface feBaseOperation {
 		public void execute(FilterStack fstack);
+		public Allocation getOut();
 	}
 
 	class FilterStack {
 		public RenderScript rs;
 		public List<feBaseOperation> operations;
-		public Bitmap background;
-		public Bitmap source;
+		private Allocation background;
+		private Allocation source;
+		private Allocation backgroundAlpha;
+		private Allocation sourceAlpha;
+		private Bitmap pureAlpha;
+		public Bitmap scratch;
+		public ScriptIntrinsicBlend blendOp;
+		public ScriptIntrinsicBlur blurOp;
+		public int width, height;
+		feBaseOperation lastOperation;
 
 		public FilterStack() {
 			operations = new ArrayList<feBaseOperation>();
-			rs = RenderScript.create(current_activity);
 			Log.v("Kamoflage", "Filter.java:FilterStack.FilterStack() - rs created");
+		}
+
+		public Allocation getInAllocation(int in) {
+			switch(in) {
+			case -1:
+				Log.v("Kamoflage", "getInAllocation(-1, Source)");
+				return source;
+			case -2:
+				Log.v("Kamoflage", "getInAllocation(-2, SourceAlpha)");
+				return getSourceAlpha();
+			case -3:
+				Log.v("Kamoflage", "getInAllocation(-3, Background)");
+				return background;
+			case -4:
+				Log.v("Kamoflage", "getInAllocation(-4, BackgroundAlpha)");
+				return getBackgroundAlpha();
+			case -5:
+				Log.v("Kamoflage", "getInAllocation(-5, -- fail --)");
+				return null;
+			case -6:
+				Log.v("Kamoflage", "getInAllocation(-6, -- fail --)");
+				return null;
+			default:
+				Log.v("Kamoflage", "getInAllocation(" + in + ", <ref>)");
+				return operations.get(in).getOut();
+			}
+
+		}
+		public Bitmap getPureAlpha() {
+			if(pureAlpha == null) {
+				Log.v("Kamoflage", "Filter.java:FilterStack.getPureAlpha()" +
+				      width + " x " + height);
+				pureAlpha = Bitmap.createBitmap(
+					width,
+					height,
+					Bitmap.Config.ARGB_8888);
+				pureAlpha.eraseColor(0xff000000);
+			}
+			return pureAlpha;
+		}
+
+		public Allocation getSourceAlpha() {
+			if(sourceAlpha == null) {
+				sourceAlpha = Allocation.createFromBitmap(rs, getPureAlpha());
+				blendOp.forEachDstIn(source, sourceAlpha);
+			}
+			return sourceAlpha;
+		}
+
+		public Allocation getBackgroundAlpha() {
+			if(backgroundAlpha == null) {
+				backgroundAlpha = Allocation.createFromBitmap(rs, getPureAlpha());
+				blendOp.forEachDstIn(background, backgroundAlpha);
+			}
+			return backgroundAlpha;
 		}
 
 		public void add(feBaseOperation fe) {
 			operations.add(fe);
+			lastOperation = fe;
 		}
 
-		public void execute(Bitmap _background, Bitmap _source) {
-			background = _background;
-			source = _source;
+		public Bitmap execute(Bitmap _background, Bitmap _source) {
+			width = _source.getWidth();
+			height = _source.getHeight();
+
+			_background = Bitmap.createBitmap(_background, 0, 0, width, height);
+			scratch = Bitmap.createBitmap(_background, 0, 0, width, height);
+
+			rs = RenderScript.create(current_activity);
+
+			background = Allocation.createFromBitmap(rs, _background);
+			source = Allocation.createFromBitmap(rs, _source);
+
+			backgroundAlpha = null;
+			sourceAlpha = null;
+			pureAlpha = null;
+
+			blendOp =
+				ScriptIntrinsicBlend.create(rs, background.getElement());
+			blurOp =
+				ScriptIntrinsicBlur.create(rs, background.getElement());
+
+			Log.v("Kamoflage", "Filter.java:FilterStack.execute() BEGIN operations.");
+			Log.v("Kamoflage", "Filter.java:FilterStack.execute() bg: ["
+			      + _background.getWidth()
+			      + ", "
+			      + _background.getHeight()
+			      +"]");
+			Log.v("Kamoflage", "Filter.java:FilterStack.execute() src: ["
+			      + _source.getWidth()
+			      + ", "
+			      + _source.getHeight()
+			      +"]");
+
 			for(feBaseOperation op : operations) {
 				op.execute(this);
 			}
+
+			Log.v("Kamoflage", "Filter.java:FilterStack.execute()" +
+				      width + " x " + height);
+			Bitmap finalBitmap = Bitmap.createBitmap(
+				width,
+				height,
+				Bitmap.Config.ARGB_8888);
+			Log.v("Kamoflage", "Filter.java:FilterStack.execute() - finalBitmap.eraseColor()");
+			finalBitmap.eraseColor(0x00000000);
+
+			Log.v("Kamoflage", "Filter.java:FilterStack.execute() - get last operation...");
+			if(lastOperation != null)
+				lastOperation.getOut().copyTo(finalBitmap);
+
+			Log.v("Kamoflage", "Filter.java:FilterStack.execute() - rs.finish()");
+			rs.finish();
+			rs.destroy();
+			rs = null;
+
+			return finalBitmap;
 		}
 	}
 
 	class feBlend implements feBaseOperation {
+		ScriptIntrinsicBlend blendOp;
+		Allocation out;
+
+		@Override
+		public Allocation getOut() {
+			return out;
+		}
+
 		@Override
 		public void execute(FilterStack fstack) {
+			Log.v("Kamoflage", "Filter.java:feBlend.execute() -- begin");
+			Allocation in_al = fstack.getInAllocation(in);
+			out = Allocation.createFromBitmap(fstack.rs, fstack.getPureAlpha());
+			out.copyFrom(fstack.getInAllocation(in2));
+
+			switch(mode) {
+			case 0:
+				fstack.blendOp.forEachSrcOver(in_al, out);
+				break;
+			case 1:
+				fstack.blendOp.forEachMultiply(in_al, out);
+				break;
+			case 2:
+				// this is not right - should be "screen"
+				fstack.blendOp.forEachMultiply(in_al, out);
+				break;
+			case 3:
+				// this is not right - should be "darken"
+				fstack.blendOp.forEachMultiply(in_al, out);
+				break;
+			case 4:
+				// this is not right - should be "lighten"
+				fstack.blendOp.forEachMultiply(in_al, out);
+				break;
+			}
+			Log.v("Kamoflage", "Filter.java:feBlend.execute() -- end");
 		}
 
 		int x, y;
@@ -104,8 +252,50 @@ public class Filter {
 	}
 
 	class feComposite implements feBaseOperation {
+		Allocation out;
+
+		@Override
+		public Allocation getOut() {
+			return out;
+		}
+
 		@Override
 		public void execute(FilterStack fstack) {
+			Log.v("Kamoflage", "Filter.java:feComposite.execute() -- begin");
+
+			Allocation in_al = fstack.getInAllocation(in);
+			Log.v("Kamoflage", "Filter.java:feComposite.execute() -- in_al : "
+			      + in_al.getBytesSize());
+			Allocation in2_al = fstack.getInAllocation(in2);
+			Log.v("Kamoflage", "Filter.java:feComposite.execute() -- in2_al : "
+			      + in2_al.getBytesSize());
+			in2_al.copyTo(fstack.scratch);
+			out = Allocation.createFromBitmap(fstack.rs, fstack.scratch);
+			Log.v("Kamoflage", "Filter.java:feComposite.execute() -- out (post) : "
+			      + out.getBytesSize());
+
+			switch(oprt) {
+			case 1:
+				fstack.blendOp.forEachSrcOver(in_al, out);
+				break;
+			case 2:
+				fstack.blendOp.forEachSrcIn(in_al, out);
+				break;
+			case 3:
+				fstack.blendOp.forEachSrcOut(in_al, out);
+				break;
+			case 4:
+				fstack.blendOp.forEachSrcAtop(in_al, out);
+				break;
+			case 5:
+				fstack.blendOp.forEachXor(in_al, out);
+				break;
+			case 6:
+				// this is not right - should be "arithmetic"
+				fstack.blendOp.forEachMultiply(in_al, out);
+				break;
+			}
+			Log.v("Kamoflage", "Filter.java:feComposite.execute() -- end");
 		}
 
 		int x, y, width, height, oprt, in, in2;
@@ -131,12 +321,31 @@ public class Filter {
 	}
 
 	class feFlood implements feBaseOperation {
+		Allocation out;
+
+		@Override
+		public Allocation getOut() {
+			return out;
+		}
+
 		@Override
 		public void execute(FilterStack fstack) {
+			Log.v("Kamoflage", "Filter.java:feFlood.execute()" +
+				      fstack.width + " x " + fstack.height);
+			floodBitmap = Bitmap.createBitmap(
+				fstack.width,
+				fstack.height,
+				Bitmap.Config.ARGB_8888);
+			floodBitmap.eraseColor((color & 0x00ffffff) | (opacity << 24));
+			Log.v("Kamoflage", "Filter.java:feFlood.execute() -- Allocation.createFromBitmap()");
+			out = Allocation.createFromBitmap(fstack.rs, floodBitmap);
+			Log.v("Kamoflage", "Filter.java:feFlood.execute() -- done");
 		}
 
 		int x, y, width, height, in, color;
-		double opacity;
+		int opacity;
+
+		Bitmap floodBitmap;
 
 		feFlood(int _x, int _y, int _width, int _height, int _in,
 			int _color, double _opacity) {
@@ -146,13 +355,33 @@ public class Filter {
 			height = _height;
 			in = _in;
 			color = _color;
-			opacity = _opacity;
+			_opacity *= 255.0;
+			opacity = (int)_opacity;
 		}
 	}
 
 	class feGaussianBlur implements feBaseOperation {
+		Allocation out;
+
+		@Override
+		public Allocation getOut() {
+			return out;
+		}
+
 		@Override
 		public void execute(FilterStack fstack) {
+			out = Allocation.createFromBitmap(fstack.rs, fstack.getPureAlpha());
+
+			Log.v("Kamoflage", "Filter.java:feGaussian.execute() -- begin ("
+			      + (float)std_dev_x +
+			      ")");
+			Allocation in_al = fstack.getInAllocation(in);
+			out = Allocation.createFromBitmap(fstack.rs, fstack.getPureAlpha());
+			fstack.blurOp.setInput(in_al);
+			fstack.blurOp.setRadius((float)std_dev_x); // we only support circular blur
+			fstack.blurOp.forEach(out);
+			Log.v("Kamoflage", "Filter.java:feGaussian.execute() -- end");
+
 		}
 
 		int x, y, width, height, in;
@@ -172,12 +401,29 @@ public class Filter {
 	}
 
 	class feOffset implements feBaseOperation {
+		Allocation out;
+
+		@Override
+		public Allocation getOut() {
+			return out;
+		}
+
 		@Override
 		public void execute(FilterStack fstack) {
+			Log.v("Kamoflage", "Filter.java:feOffset.execute() -- begin");
+			Allocation in_al = fstack.getInAllocation(in);
+			in_al.copyTo(fstack.scratch);
+			Bitmap tmp = Bitmap.createBitmap(fstack.width, fstack.height, Bitmap.Config.ARGB_8888);
+			tmp.eraseColor(0x00000000);
+			Canvas tc = new Canvas(tmp);
+			tc.drawBitmap(fstack.scratch, dx, dy, null);
+			out = Allocation.createFromBitmap(fstack.rs, tmp);
+			Log.v("Kamoflage", "Filter.java:feOffset.execute() -- end");
+			// actual offset not implemented yet
 		}
 
 		int x, y, width, height, in;
-		double dx, dy;
+		float dx, dy;
 
 		feOffset(int _x, int _y, int _width, int _height,
 			 int _in, double _dx, double _dy) {
@@ -186,8 +432,8 @@ public class Filter {
 			width = _width;
 			height = _height;
 			in = _in;
-			dx = _dx;
-			dy = _dy;
+			dx = (float)_dx;
+			dy = (float)_dy;
 		}
 	}
 
@@ -246,10 +492,24 @@ public class Filter {
 	public void addFilter_feGaussianBlur(int x, int y, int width, int height,
 					     int in,
 					     double std_dev_x, double std_dev_y) {
-		Log.v("Kamoflage", "Filter.java:Filter.addFilter_feGaussianBlur()");
+		Log.v("Kamoflage", "Filter.java:Filter.addFilter_feGaussianBlur("
+		      + std_dev_x +
+		      ", "
+		      + std_dev_y +
+		      ")");
 		if(current != null) {
-			current.add(new feGaussianBlur(x, y, width, height, in,
-						       std_dev_x, std_dev_y));
+			if(std_dev_x == 0.0 && std_dev_y > 0.0)
+				std_dev_x = std_dev_y;
+			else if(std_dev_y == 0.0 && std_dev_x > 0.0)
+				std_dev_y = std_dev_x;
+			if(std_dev_x == 0.0 || std_dev_y == 0.0) {
+				current.add(new feComposite(x, y, width, height,
+							    1, in, in,
+							    0.0, 0.0, 0.0, 0.0));
+			} else {
+				current.add(new feGaussianBlur(x, y, width, height, in,
+							       std_dev_x, std_dev_y));
+			}
 		}
 	}
 
@@ -262,10 +522,11 @@ public class Filter {
 		}
 	}
 
-	public void execute(Bitmap background, Bitmap source) {
+	public Bitmap execute(Bitmap background, Bitmap source) {
 		Log.v("Kamoflage", "Filter.java:Filter.execute()");
 		if(current != null) {
-			current.execute(background, source);
+			return current.execute(background, source);
 		}
+		return null;
 	}
 }

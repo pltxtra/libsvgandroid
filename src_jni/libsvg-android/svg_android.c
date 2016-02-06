@@ -574,6 +574,9 @@ svg_status_t svgAndroidRender
 	/* we always need a valid bitmap, since we must pass it
 	 * as the background when processing filters
 	 */
+	SVG_ANDROID_ERROR("svgAndroidRender() --> offscreen: (%d, %d)\n",
+			  (int)width,
+			  (int)height);
 	jobject offscreen_bitmap = ANDROID_CREATE_BITMAP(svg_android, width, height);
 	ANDROID_FILL_BITMAP(svg_android, offscreen_bitmap, 0x00000000);
 
@@ -583,7 +586,16 @@ svg_status_t svgAndroidRender
 	svg_android->fit_to_area = 0;
 	svg_status_t return_status = svg_render (svg_android->svg, &SVG_ANDROID_RENDER_ENGINE, svg_android);
 
+	SVG_ANDROID_ERROR("svgAndroidRender() --> popping final state...\n");
+
 	(void) _svg_android_pop_state (svg_android);
+
+	SVG_ANDROID_ERROR("svgAndroidRender() --> finished render -- check exception...\n");
+	if((*(svg_android->env))->ExceptionOccurred(svg_android->env)) {
+		SVG_ANDROID_ERROR("svgAndroidRender() --> exception found...\n");
+		(*(svg_android->env))->ExceptionDescribe(svg_android->env);
+	} else
+		SVG_ANDROID_ERROR("svgAndroidRender() --> NO exception found!\n");
 
 	return return_status;
 }
