@@ -77,8 +77,8 @@ function do_zlib {
 }
 
 function do_libpng {
-    tar -xf libpng-1.6.18.tar.xz
-    pushd libpng-1.6.18
+    tar -xf libpng-1.6.26.tar.xz
+    pushd libpng-1.6.26
     do_compile libpng
     popd
 }
@@ -129,8 +129,8 @@ function do_bootstrap {
     run_checksum "3353992aecaee1805ef4109aadd433e7 ./jpegsrc.v9a.tar.gz"
     wget http://zlib.net/zlib-1.2.8.tar.gz
     run_checksum "44d667c142d7cda120332623eab69f40 ./zlib-1.2.8.tar.gz"
-    wget http://github.com/glennrp/libpng-releases/raw/master/libpng-1.6.18.tar.xz
-    run_checksum "6a57c8e0f5469b9c9949a4b43d57b3a1 ./libpng-1.6.18.tar.xz"
+    wget http://github.com/glennrp/libpng-releases/raw/master/libpng-1.6.26.tar.xz
+    run_checksum "faed9bb495d2e12dd0c9ec561ca60cd8 ./libpng-1.6.26.tar.xz"
     wget 'http://downloads.sourceforge.net/project/expat/expat/2.1.0/expat-2.1.0.tar.gz'
     run_checksum "dd7dab7a5fea97d2a6a43f511449b7cd ./expat-2.1.0.tar.gz"
 
