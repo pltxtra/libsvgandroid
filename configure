@@ -14,7 +14,7 @@ function usage {
     echo "$0 --help"
     echo "         : prints this help text"
     echo "$0 --ndk-path <path to NDK> --sdk-path <path to SDK> --target-platform <android target platform> [--bootstrap]"
-    echo "         : create a Makefile, --boostrap will automatically download and compile prerequsite libraries"
+    echo "         : create a Makefile, --bootstrap will automatically download and compile prerequisite libraries"
     echo
     echo
 }
@@ -39,15 +39,15 @@ function do_fail {
 function do_compile {
     ./configure --enable-shared=no --prefix=$TARGET_DIR --host=arm-linux
     if [ $? -ne 0 ]; then
-	fail $1
+	do_fail $1
     fi
     make
     if [ $? -ne 0 ]; then
-	fail $1
+	do_fail $1
     fi
     make install
     if [ $? -ne 0 ]; then
-	fail $1
+	do_fail $1
     fi
 }
 
