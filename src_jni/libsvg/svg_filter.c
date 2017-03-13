@@ -313,7 +313,7 @@ static svg_filter_primitive_t* parse_filter_primitive (svg_parser_t *parser,
 	if(_svg_attribute_get_string (attributes, "result", &result_str, NULL) ==
 	   SVG_STATUS_SUCCESS &&
 	   result_str != NULL) {
-		(void) StrHmapInsert(filter_element->e.filter.results, result_str, fprim);
+		(void) StrHmapReplace(filter_element->e.filter.results, result_str, fprim);
 	}
 
 	parse_filter_in(filter_element, attributes, "in", &(fprim->in), &(fprim->in_ref));
