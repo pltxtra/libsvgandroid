@@ -25,7 +25,7 @@
 #include "svgint.h"
 #include "svg_parser.h"
 
-#define __DO_SVG_DEBUG
+//#define __DO_SVG_DEBUG
 #include "svg_debug.h"
 
 svg_status_t
@@ -477,7 +477,7 @@ _svg_parser_parse_feFlood (svg_parser_t *parser,
 	if (_svg_attribute_get_string (attributes, "flood-color", &color_str, "#000000") == SVG_STATUS_SUCCESS)
 		_svg_color_init_from_str (&(fprim->p.fe_flood.color), color_str);
 
-	_svg_attribute_get_double (attributes, "flood-opacity", &(fprim->p.fe_flood.opacity), 0);
+	_svg_attribute_get_double (attributes, "flood-opacity", &(fprim->p.fe_flood.opacity), 1.0);
 
 	SVG_DEBUG("_svg_parser_parse_feFlood() called.\n");
 
