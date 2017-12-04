@@ -619,6 +619,9 @@ svg_status_t svgAndroidRenderToArea(JNIEnv *env, svg_android_t *svg_android, job
 	svg_android->fit_to_h = h;
 	svg_android->fit_to_MATRIX = NULL;
 
+	svg_android->viewport_width = w;
+	svg_android->viewport_height = h;
+
 	svg_status_t return_status =  svg_render (svg_android->svg, &SVG_ANDROID_RENDER_ENGINE, svg_android);
 
 	_svg_android_pop_state (svg_android);
