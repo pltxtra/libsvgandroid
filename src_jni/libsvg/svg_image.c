@@ -1,22 +1,22 @@
 /* svg_image.c: Data structures for SVG image elements
- 
+
    Copyright © 2002 USC/Information Sciences Institute
-  
+
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public License as
    published by the Free Software Foundation; either version 2 of the
    License, or (at your option) any later version.
-  
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
    Library General Public License for more details.
-  
+
    You should have received a copy of the GNU Library General Public
    License along with this program; if not, write to the
    Free Software Foundation, Inc., 59 Temple Place - Suite 330,
    Boston, MA 02111-1307, USA.
-  
+
    Author: Carl Worth <cworth@isi.edu>
 */
 
@@ -65,7 +65,7 @@ svg_status_t _svg_image_init_copy (svg_image_t *image,
 		image->url = strdup (other->url);
 	else
 		image->url = NULL;
-	
+
 	return SVG_STATUS_SUCCESS;
 }
 
@@ -190,7 +190,7 @@ static void
 premultiply_data (png_structp png, png_row_infop row_info, png_bytep data)
 {
     int i;
-  
+
     for (i = 0; i < row_info->rowbytes; i += 4) {
 	unsigned char *b = &data[i];
 	unsigned char alpha = b[3];
@@ -355,32 +355,32 @@ _svg_image_read_jpeg (const char	*filename,
     JSAMPARRAY buf;
     int i, row_stride;
     unsigned char *out, *in;
-    
+
     file = fopen (filename, "rb");
     if (file == NULL)
 	return SVG_STATUS_FILE_NOT_FOUND;
-    
+
     cinfo.err = jpeg_std_error (&jpeg_err.pub);
     jpeg_err.pub.error_exit = _svg_image_jpeg_error_exit;
-    
+
     status = setjmp (jpeg_err.setjmp_buf);
     if (status) {
 	jpeg_destroy_decompress(&cinfo);
 	fclose(file);
 	return status;
     }
-    
+
     jpeg_create_decompress (&cinfo);
     jpeg_stdio_src (&cinfo, file);
     jpeg_read_header (&cinfo, TRUE);
     jpeg_start_decompress (&cinfo);
-    
+
     row_stride = cinfo.output_width * cinfo.output_components;
     *width = cinfo.output_width;
     *height= cinfo.output_height;
     buf = (*cinfo.mem->alloc_sarray)
 	((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
-    
+
     *data = malloc (cinfo.output_width * cinfo.output_height * 4);
     out = (unsigned char*) *data;
     while (cinfo.output_scanline < cinfo.output_height) {
@@ -410,7 +410,6 @@ _svg_image_read_jpeg (const char	*filename,
     jpeg_finish_decompress (&cinfo);
     jpeg_destroy_decompress (&cinfo);
     fclose(file);
-    
+
     return SVG_STATUS_SUCCESS;
 }
-
