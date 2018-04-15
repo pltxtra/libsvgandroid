@@ -26,6 +26,7 @@
 #include <jerror.h>
 #include <setjmp.h>
 
+#include "base64.c"
 #include "svgint.h"
 
 static svg_status_t
@@ -203,6 +204,46 @@ premultiply_data (png_structp png, png_row_infop row_info, png_bytep data)
     }
 }
 
+static int is_inline_png(const char *fname, char *dest) {
+	const char *header = "data:image/png;base64,";
+	if(strcmp(header, fname) == 0) {
+		const char *src = &fname[strlen(header)];
+		int len;
+
+		len = Base64decode(dest, src);
+		return len;
+	}
+	return 0;
+}
+
+typedef struct {
+	size_t length, offset;
+	char *data;
+} inline_buffer_t;
+
+static size_t inline_buffer_read(inline_buffer_t *buffer, uint8_t *dst, size_t len) {
+	size_t next_offset = buffer->offset + len;
+	next_offset = next_offset < buffer->length ? next_offset : buffer->length;
+	size_t read_length = next_offset - buffer->offset;
+	memcpy(dst, &buffer->data[buffer->offset], read_length);
+	buffer->offset += read_length;
+	return read_length;
+}
+
+static void png_read_inline_buffer(png_structp png_ptr,
+				   png_bytep dst,
+				   png_size_t len) {
+   png_voidp io_ptr = png_get_io_ptr(png_ptr);
+   if(io_ptr == NULL)
+	   return;
+
+   inline_buffer_t inline_buffer = (inline_buffer_t *)io_ptr;
+   const size_t bytes_read = inline_buffer_read(inline_buffer, (uint8_t *)dst, len)
+
+   if((png_size_t)bytes_read != len)
+	   return;
+}
+
 static svg_status_t
 _svg_image_read_png (const char		*filename,
 		     char	 	**data,
@@ -210,25 +251,38 @@ _svg_image_read_png (const char		*filename,
 		     unsigned int	*height)
 {
     int i;
-    FILE *file;
+    FILE *file = NULL;
     static const int PNG_SIG_SIZE = 8;
-    unsigned char png_sig[PNG_SIG_SIZE];
+    char png_sig[PNG_SIG_SIZE];
     int sig_bytes;
-    png_struct *png;
-    png_info *info;
+    unsigned char inline_data[strlen(url)]; // we can use this buffer to decode any inline image
+    inline_buffer_t inline_buffer;
+    png_struct *png = NULL;
+    png_info *info = NULL;
     png_uint_32 png_width, png_height;
     int depth, color_type, interlace;
     unsigned int pixel_size;
     png_byte **row_pointers;
+    svg_status_t return_value = SVG_STATUS_SUCCESS;
 
-    file = fopen (filename, "rb");
-    if (file == NULL)
-	return SVG_STATUS_FILE_NOT_FOUND;
+    inline_buffer.data = inline_data;
+    if((inline_buffer.length = is_inline_png(filename, inline_buffer.data)) != 0) {
+	    if(inline_buffer_read(&inline_buffer, png_sig, PNG_SIG_SIZE) != PNG_SIG_SIZE) {
+		    return_value = SVG_STATUS_IMAGE_NOT_PNG;
+		    goto fail;
+	    }
+    } else {
+	    file = fopen (filename, "rb");
+	    if (file == NULL) {
+		    return_value = SVG_STATUS_FILE_NOT_FOUND;
+		    goto fail;
+	    }
 
-    sig_bytes = fread (png_sig, 1, PNG_SIG_SIZE, file);
+	    sig_bytes = fread (png_sig, 1, PNG_SIG_SIZE, file);
+    }
     if (png_sig_cmp (png_sig, 0, sig_bytes) != 0) {
-	fclose (file);
-	return SVGINT_STATUS_IMAGE_NOT_PNG;
+	    return_value = SVG_STATUS_IMAGE_NOT_PNG;
+	    goto fail;
     }
 
     /* XXX: Perhaps we'll want some other error handlers? */
@@ -237,15 +291,19 @@ _svg_image_read_png (const char		*filename,
 				  NULL,
 				  NULL);
     if (png == NULL) {
-	fclose (file);
-	return SVG_STATUS_NO_MEMORY;
+	    return_value = SVG_STATUS_NO_MEMORY;
+	    goto fail;
+    }
+
+    if (inline_buffer.length) {
+	png_set_read_fn(png, &inline_buffer, png_read_inline_buffer);
+	png_set_sig_bytes(png, PNG_SIG_SIZE);
     }
 
     info = png_create_info_struct (png);
     if (info == NULL) {
-	fclose (file);
-	png_destroy_read_struct (&png, NULL, NULL);
-	return SVG_STATUS_NO_MEMORY;
+	return_value = SVG_STATUS_NO_MEMORY;
+	goto fail;
     }
 
     png_init_io (png, file);
@@ -299,8 +357,8 @@ _svg_image_read_png (const char		*filename,
     pixel_size = 4;
     *data = malloc (png_width * png_height * pixel_size);
     if (*data == NULL) {
-	fclose (file);
-	return SVG_STATUS_NO_MEMORY;
+	return_value = SVG_STATUS_NO_MEMORY;
+	goto fail;
     }
 
     row_pointers = malloc (png_height * sizeof(char *));
@@ -310,12 +368,16 @@ _svg_image_read_png (const char		*filename,
     png_read_image (png, row_pointers);
     png_read_end (png, info);
 
-    free (row_pointers);
-    fclose (file);
+fail:
 
-    png_destroy_read_struct (&png, &info, NULL);
+    if (row_pointers)
+	    free (row_pointers);
+    if (file)
+	    fclose (file);
+    if (png)
+	    png_destroy_read_struct (&png, &info, NULL);
 
-    return SVG_STATUS_SUCCESS;
+    return return_value;
 }
 
 typedef struct _svg_image_jpeg_err {
