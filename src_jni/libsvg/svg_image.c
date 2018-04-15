@@ -204,13 +204,13 @@ premultiply_data (png_structp png, png_row_infop row_info, png_bytep data)
     }
 }
 
-static int is_inline_png(const char *fname, char *dest) {
+static int is_inline_png(const char *fname, unsigned char *dest) {
 	const char *header = "data:image/png;base64,";
 	if(strcmp(header, fname) == 0) {
 		const char *src = &fname[strlen(header)];
 		int len;
 
-		len = Base64decode(dest, src);
+		len = base64_decode(dest, src);
 		return len;
 	}
 	return 0;
@@ -218,7 +218,7 @@ static int is_inline_png(const char *fname, char *dest) {
 
 typedef struct {
 	size_t length, offset;
-	char *data;
+	unsigned char *data;
 } inline_buffer_t;
 
 static size_t inline_buffer_read(inline_buffer_t *buffer, uint8_t *dst, size_t len) {
@@ -237,8 +237,8 @@ static void png_read_inline_buffer(png_structp png_ptr,
    if(io_ptr == NULL)
 	   return;
 
-   inline_buffer_t inline_buffer = (inline_buffer_t *)io_ptr;
-   const size_t bytes_read = inline_buffer_read(inline_buffer, (uint8_t *)dst, len)
+   inline_buffer_t *inline_buffer = (inline_buffer_t *)io_ptr;
+   const size_t bytes_read = inline_buffer_read(inline_buffer, (uint8_t *)dst, len);
 
    if((png_size_t)bytes_read != len)
 	   return;
@@ -253,22 +253,22 @@ _svg_image_read_png (const char		*filename,
     int i;
     FILE *file = NULL;
     static const int PNG_SIG_SIZE = 8;
-    char png_sig[PNG_SIG_SIZE];
+    unsigned char png_sig[PNG_SIG_SIZE];
     int sig_bytes;
-    unsigned char inline_data[strlen(url)]; // we can use this buffer to decode any inline image
+    unsigned char inline_data[strlen(filename)]; // we can use this buffer to decode any inline image
     inline_buffer_t inline_buffer;
     png_struct *png = NULL;
     png_info *info = NULL;
     png_uint_32 png_width, png_height;
     int depth, color_type, interlace;
     unsigned int pixel_size;
-    png_byte **row_pointers;
+    png_byte **row_pointers = NULL;
     svg_status_t return_value = SVG_STATUS_SUCCESS;
 
     inline_buffer.data = inline_data;
     if((inline_buffer.length = is_inline_png(filename, inline_buffer.data)) != 0) {
-	    if(inline_buffer_read(&inline_buffer, png_sig, PNG_SIG_SIZE) != PNG_SIG_SIZE) {
-		    return_value = SVG_STATUS_IMAGE_NOT_PNG;
+	    if((sig_bytes = inline_buffer_read(&inline_buffer, png_sig, PNG_SIG_SIZE)) != PNG_SIG_SIZE) {
+		    return_value = SVGINT_STATUS_IMAGE_NOT_PNG;
 		    goto fail;
 	    }
     } else {
@@ -281,7 +281,7 @@ _svg_image_read_png (const char		*filename,
 	    sig_bytes = fread (png_sig, 1, PNG_SIG_SIZE, file);
     }
     if (png_sig_cmp (png_sig, 0, sig_bytes) != 0) {
-	    return_value = SVG_STATUS_IMAGE_NOT_PNG;
+	    return_value = SVGINT_STATUS_IMAGE_NOT_PNG;
 	    goto fail;
     }
 
@@ -361,7 +361,7 @@ _svg_image_read_png (const char		*filename,
 	goto fail;
     }
 
-    row_pointers = malloc (png_height * sizeof(char *));
+    row_pointers = (png_byte **) malloc (png_height * sizeof(char *));
     for (i=0; i < png_height; i++)
 	row_pointers[i] = (png_byte *) (*data + i * png_width * pixel_size);
 
