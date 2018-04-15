@@ -63,6 +63,13 @@ typedef struct svg_pt {
     double y;
 } svg_pt_t;
 
+	typedef enum SVG_IMAGE_RENDER_STYLE {
+		SVG_IMAGERENDER_AUTO,
+		SVG_IMAGERENDER_SPEED,
+		SVG_IMAGERENDER_QUALITY,
+		SVG_IMAGERENDER_INHERIT
+	} svg_imagerender_style_t;
+
 /* All commands that may appear in a path data string */
 typedef enum svg_path_cmd {
     SVG_PATH_CMD_MOVE_TO,
@@ -194,6 +201,8 @@ typedef struct svg_style {
     svg_length_t			font_size;
     svg_font_style_t			font_style;
     unsigned int			font_weight;
+
+    svg_imagerender_style_t             image_rendering;
 
     double				opacity;
 

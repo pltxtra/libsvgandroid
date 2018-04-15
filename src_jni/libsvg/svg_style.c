@@ -56,6 +56,9 @@ static svg_status_t
 _svg_style_parse_font_weight (svg_style_t *style, const char *str);
 
 static svg_status_t
+_svg_style_parse_image_rendering (svg_style_t *style, const char *str);
+
+static svg_status_t
 _svg_style_parse_opacity (svg_style_t *style, const char *str);
 
 static svg_status_t
@@ -128,7 +131,7 @@ static const svg_style_parse_map_t SVG_STYLE_PARSE_MAP[] = {
     { "font-weight",		_svg_style_parse_font_weight,		"normal" },
 /* XXX: { "glyph-orientation-horizontal",	_svg_style_parse_glyph_orientation_horizontal,	"0deg" }, */
 /* XXX: { "glyph-orientation-vertical",		_svg_style_parse_glyph_orientation_vertical,	"auto" }, */
-/* XXX: { "image-rendering",	_svg_style_parse_image_rendering,	"auto" }, */
+    { "image-rendering",	_svg_style_parse_image_rendering,	"auto" },
 /* XXX: { "kerning",		_svg_style_parse_kerning,		"auto" }, */
 /* XXX: { "letter-spacing",	_svg_style_parse_letter_spacing,	"normal" }, */
 /* XXX: { "marker",		_svg_style_parse_marker,		NULL }, */
@@ -455,6 +458,23 @@ _svg_style_parse_font_weight (svg_style_t *style, const char *str)
     style->flags |= SVG_STYLE_FLAG_FONT_WEIGHT;
 
     return SVG_STATUS_SUCCESS;
+}
+
+static svg_status_t
+_svg_style_parse_image_rendering (svg_style_t *style, const char *str)
+{
+	if (strcmp (str,  "optimizeSpeed") == 0)
+		style->image_rendering == SVG_IMAGERENDER_SPEED;
+	else if (strcmp (str,  "optimizeQuality") == 0)
+		style->image_rendering == SVG_IMAGERENDER_QUALITY;
+	else if (strcmp (str,  "inherit") == 0)
+		style->image_rendering == SVG_IMAGERENDER_INHERIT;
+	else
+		style->image_rendering == SVG_IMAGERENDER_AUTO;
+
+	style->flags |= SVG_STYLE_FLAG_IMAGE_RENDERING;
+
+	return SVG_STATUS_SUCCESS;
 }
 
 static svg_status_t
