@@ -29,6 +29,9 @@
 #include "base64.c"
 #include "svgint.h"
 
+//#define __DO_SVG_DEBUG
+#include "svg_debug.h"
+
 static svg_status_t
 _svg_image_read_image (svg_image_t *image);
 
@@ -204,13 +207,36 @@ premultiply_data (png_structp png, png_row_infop row_info, png_bytep data)
     }
 }
 
+static void hexdump(unsigned char *data, size_t len) {
+	char bfr[10 + 16 * 3 + 1];
+	size_t offset = 0;
+	SVG_ERROR("\n\nHexdump of %p (%d)\n", data, len);
+	while(len > 0) {
+		size_t step = len < 16 ? len : 16;
+		size_t x;
+
+		sprintf(bfr, "%08x  ", offset);
+		for(x = 0; x < step; x++) {
+			sprintf(&bfr[10 + x * 3], "%02x ", data[x]);
+		}
+		SVG_ERROR("%s\n", bfr);
+
+		data = &data[step];
+		len -= step;
+		offset += step;
+	}
+}
+
 static int is_inline_png(const char *fname, unsigned char *dest) {
 	const char *header = "data:image/png;base64,";
-	if(strcmp(header, fname) == 0) {
+	SVG_ERROR("Comparing %s with %s\n", header, fname);
+	if(strncmp(header, fname, strlen(header)) == 0) {
 		const char *src = &fname[strlen(header)];
 		int len;
-
+		SVG_ERROR("Will decode %s\n", src);
 		len = base64_decode(dest, src);
+		SVG_ERROR("len: %d, %p -> %p\n", len, dest, dest + len);
+		hexdump(dest, len);
 		return len;
 	}
 	return 0;
@@ -225,6 +251,8 @@ static size_t inline_buffer_read(inline_buffer_t *buffer, uint8_t *dst, size_t l
 	size_t next_offset = buffer->offset + len;
 	next_offset = next_offset < buffer->length ? next_offset : buffer->length;
 	size_t read_length = next_offset - buffer->offset;
+
+	SVG_ERROR("Reading (%d) %d bytes from %p to %p\n", len, read_length, &buffer->data[buffer->offset], dst);
 	memcpy(dst, &buffer->data[buffer->offset], read_length);
 	buffer->offset += read_length;
 	return read_length;
@@ -267,11 +295,14 @@ _svg_image_read_png (const char		*filename,
 
     inline_buffer.data = inline_data;
     if((inline_buffer.length = is_inline_png(filename, inline_buffer.data)) != 0) {
+	    inline_buffer.offset = 0;
+	    SVG_ERROR("_svg_image_render() png inline...\n");
 	    if((sig_bytes = inline_buffer_read(&inline_buffer, png_sig, PNG_SIG_SIZE)) != PNG_SIG_SIZE) {
 		    return_value = SVGINT_STATUS_IMAGE_NOT_PNG;
 		    goto fail;
 	    }
     } else {
+	    SVG_ERROR("_svg_image_render() png in file...\n");
 	    file = fopen (filename, "rb");
 	    if (file == NULL) {
 		    return_value = SVG_STATUS_FILE_NOT_FOUND;
@@ -296,6 +327,7 @@ _svg_image_read_png (const char		*filename,
     }
 
     if (inline_buffer.length) {
+	    SVG_ERROR("setting up read function for libpng.\n");
 	png_set_read_fn(png, &inline_buffer, png_read_inline_buffer);
 	png_set_sig_bytes(png, PNG_SIG_SIZE);
     }
@@ -306,14 +338,27 @@ _svg_image_read_png (const char		*filename,
 	goto fail;
     }
 
-    png_init_io (png, file);
-    png_set_sig_bytes (png, sig_bytes);
+    if (setjmp(png_jmpbuf(png))) {
+	    SVG_ERROR("  png error\n");
+	    return_value = SVG_STATUS_NO_MEMORY;
+	    goto fail;
+    }
 
+    SVG_ERROR("  png step 1\n");
+    if (inline_buffer.length == 0) {
+	    png_init_io (png, file);
+	    SVG_ERROR("  png step 2\n");
+	    png_set_sig_bytes (png, sig_bytes);
+    }
+
+    SVG_ERROR("  png step 3\n");
     png_read_info (png, info);
 
+    SVG_ERROR("  png step 4\n");
     png_get_IHDR (png, info,
 		  &png_width, &png_height, &depth,
 		  &color_type, &interlace, NULL, NULL);
+    SVG_ERROR("  png step 5\n");
     *width = png_width;
     *height = png_height;
 
@@ -322,38 +367,50 @@ _svg_image_read_png (const char		*filename,
        everything to 32-bit RGBA. */
 
     /* convert palette/gray image to rgb */
+    SVG_ERROR("  png step 6\n");
     if (color_type == PNG_COLOR_TYPE_PALETTE)
 	png_set_palette_to_rgb (png);
 
     /* expand gray bit depth if needed */
+    SVG_ERROR("  png step 7\n");
     if (color_type == PNG_COLOR_TYPE_GRAY && depth < 8)
 	png_set_expand_gray_1_2_4_to_8 (png);
 
     /* transform transparency to alpha */
+    SVG_ERROR("  png step 8\n");
     if (png_get_valid(png, info, PNG_INFO_tRNS))
 	png_set_tRNS_to_alpha (png);
 
+    SVG_ERROR("  png step 9\n");
     if (depth == 16)
 	png_set_strip_16 (png);
 
+    SVG_ERROR("  png step 10\n");
     if (depth < 8)
 	png_set_packing (png);
 
     /* convert grayscale to RGB */
+    SVG_ERROR("  png step 11\n");
     if (color_type == PNG_COLOR_TYPE_GRAY
 	|| color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
 	png_set_gray_to_rgb (png);
 
+    SVG_ERROR("  png step 12\n");
     if (interlace != PNG_INTERLACE_NONE)
 	png_set_interlace_handling (png);
 
+    SVG_ERROR("  png step 13\n");
     png_set_bgr (png);
+    SVG_ERROR("  png step 14\n");
     png_set_filler (png, 0xff, PNG_FILLER_AFTER);
 
+    SVG_ERROR("  png step 15\n");
     png_set_read_user_transform_fn (png, premultiply_data);
 
+    SVG_ERROR("  png step 16\n");
     png_read_update_info (png, info);
 
+    SVG_ERROR("  png step 17\n");
     pixel_size = 4;
     *data = malloc (png_width * png_height * pixel_size);
     if (*data == NULL) {
@@ -361,12 +418,16 @@ _svg_image_read_png (const char		*filename,
 	goto fail;
     }
 
+    SVG_ERROR("  png step 18\n");
     row_pointers = (png_byte **) malloc (png_height * sizeof(char *));
     for (i=0; i < png_height; i++)
 	row_pointers[i] = (png_byte *) (*data + i * png_width * pixel_size);
 
+    SVG_ERROR("  png step 19\n");
     png_read_image (png, row_pointers);
+    SVG_ERROR("  png step 20\n");
     png_read_end (png, info);
+    SVG_ERROR("  png step 21\n");
 
 fail:
 
