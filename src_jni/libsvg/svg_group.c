@@ -242,6 +242,8 @@ _svg_group_apply_use_attributes (svg_element_t		*group,
 	return SVG_STATUS_SUCCESS;
     }
 
+    _svg_attribute_get_length (attributes, "x", &group->e.group.x, "0");
+    _svg_attribute_get_length (attributes, "y", &group->e.group.y, "0");
     _svg_attribute_get_length (attributes, "width", &group->e.group.width, "100%");
     _svg_attribute_get_length (attributes, "height", &group->e.group.height, "100%");
 
