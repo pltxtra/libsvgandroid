@@ -209,23 +209,25 @@ void _svg_element_dereference(svg_element_t *element) {
 }
 
 void
-_svg_element_get_viewport(svg_element_t *element, double *x, double *y, double *w, double *h) {
+_svg_element_get_viewport(svg_element_t *element,
+			  svg_length_t *x, svg_length_t *y,
+			  svg_length_t *w, svg_length_t *h) {
 	if(
 		(element->type == SVG_ELEMENT_TYPE_SVG_GROUP)
 		||
 		(element->type == SVG_ELEMENT_TYPE_SVG_GROUP)
 		) {
-		*x = element->e.group.x.value;
-		*y = element->e.group.y.value;
-		*w = element->e.group.width.value;
-		*h = element->e.group.height.value;
+		*x = element->e.group.x;
+		*y = element->e.group.y;
+		*w = element->e.group.width;
+		*h = element->e.group.height;
 	} else if(element->parent != NULL) {
 		_svg_element_get_viewport(element->parent, x, y, w, h);
 	} else {
-		*x = 0.0;
-		*y = 0.0;
-		*w = 0.0;
-		*h = 0.0;
+		_svg_length_init(x, 0.0);
+		_svg_length_init(y, 0.0);
+		_svg_length_init(w, 0.0);
+		_svg_length_init(h, 0.0);
 	}
 }
 

@@ -471,7 +471,9 @@ void _svg_element_dereference(svg_element_t *element);
 svg_status_t _svg_element_init_copy (const char *new_id, svg_element_t   *element, svg_element_t   *other);
 svg_status_t _svg_inject_clone(const char *new_id, svg_element_t *group, svg_element_t *element_to_clone);
 
-void _svg_element_get_viewport(svg_element_t *element, double *x, double *y, double *w, double *h);
+void _svg_element_get_viewport(svg_element_t *element,
+			       svg_length_t *x, svg_length_t *y,
+			       svg_length_t *w, svg_length_t *h);
 
 svgint_status_t _svg_element_clone (const char *new_id,
 				    svg_element_t       **element,
