@@ -36,17 +36,21 @@
 #include <android/log.h>
 
 static svg_status_t
-_svg_init (svg_t *svg);
+_svg_init (svg_t *svg,
+	   svg_render_engine_t	*engine,
+	   void		*closure);
 
 svg_status_t
-svg_create (svg_t **svg)
+svg_create (svg_t **svg,
+	    svg_render_engine_t	*engine,
+	    void		*closure)
 {
     *svg = malloc (sizeof (svg_t));
     if (*svg == NULL) {
 	return SVG_STATUS_NO_MEMORY;
     }
 
-    return _svg_init (*svg);
+    return _svg_init (*svg, engine, closure);
 }
 
 void svg_enable_path_cache(svg_t *svg) {
@@ -54,7 +58,9 @@ void svg_enable_path_cache(svg_t *svg) {
 }
 
 static svg_status_t
-_svg_init (svg_t *svg)
+_svg_init (svg_t *svg,
+	   svg_render_engine_t	*engine,
+	   void		*closure)
 {
     svg->dpi = 100;
 
@@ -64,7 +70,8 @@ _svg_init (svg_t *svg)
 
     _svg_parser_init (&svg->parser, svg);
 
-    svg->engine = NULL;
+    svg->engine = engine;
+    svg->closure = closure;
 
     svg->element_ids = StrHmapAlloc(100);
 
@@ -85,6 +92,7 @@ _svg_deinit (svg_t *svg)
     _svg_parser_deinit (&svg->parser);
 
     svg->engine = NULL;
+    svg->closure = NULL;
 
     StrHmapFree(svg->element_ids);
 
@@ -298,9 +306,7 @@ svg_event_coords_match(svg_t *svg, int x, int y) {
 }
 
 svg_status_t
-svg_render (svg_t		*svg,
-	    svg_render_engine_t	*engine,
-	    void		*closure)
+svg_render (svg_t		*svg)
 {
     svg_status_t status;
     char orig_dir[MAXPATHLEN];
@@ -318,7 +324,7 @@ svg_render (svg_t		*svg,
     getcwd (orig_dir, MAXPATHLEN);
     chdir (svg->dir_name);
 
-    status = svg_element_render (svg->group_element, engine, closure);
+    status = svg_element_render (svg->group_element, svg->engine, svg->closure);
 
     chdir (orig_dir);
 

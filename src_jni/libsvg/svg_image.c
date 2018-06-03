@@ -74,7 +74,7 @@ svg_status_t _svg_image_init_copy (svg_image_t *image,
 }
 
 svg_status_t
-_svg_image_deinit (svg_image_t *image)
+_svg_image_deinit (svg_t *doc, svg_image_t *image)
 {
     if (image->url) {
 	free (image->url);
@@ -82,8 +82,10 @@ _svg_image_deinit (svg_image_t *image)
     }
 
     if (image->data) {
-	free (image->data);
-	image->data = NULL;
+	    if (doc->engine)
+		    doc->engine->free_image_cache(doc->closure, (unsigned char *)image->data);
+	    free (image->data);
+	    image->data = NULL;
     }
 
     return SVG_STATUS_SUCCESS;

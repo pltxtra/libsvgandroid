@@ -393,6 +393,7 @@ struct svg {
     svg_parser_t parser;
 
     svg_render_engine_t *engine;
+	void *closure;
 
 	int do_path_cache;
 };
@@ -577,7 +578,7 @@ svg_status_t _svg_image_init_copy (svg_image_t *image,
 				   svg_image_t *other);
 
 svg_status_t
-_svg_image_deinit (svg_image_t *image);
+_svg_image_deinit (svg_t *doc, svg_image_t *image);
 
 svg_status_t
 _svg_image_apply_attributes (svg_image_t	*image,
@@ -678,10 +679,7 @@ svg_status_t _svg_rect_init_copy (svg_rect_element_t *path,
 				  svg_rect_element_t *other);
 
 svg_status_t
-_svg_path_deinit (svg_path_t *path);
-
-svg_status_t
-_svg_path_destroy (svg_render_engine_t *engine, void *closure, svg_path_t *path);
+_svg_path_deinit (svg_t *doc, svg_path_t *path);
 
 svg_status_t
 _svg_path_render (svg_path_t		*path,

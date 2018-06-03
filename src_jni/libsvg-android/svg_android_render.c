@@ -269,14 +269,17 @@ _svg_android_close_path (void *closure)
 	return SVG_ANDROID_STATUS_SUCCESS;
 }
 
-svg_status_t
+void
 _svg_android_free_path_cache(void *closure, void **path_cache) {
 	svg_android_t *svg_android = closure;
 
 	(*(svg_android->env))->DeleteGlobalRef(svg_android->env, (jobject)(*path_cache));
 	*path_cache = NULL;
+}
 
-	return SVG_ANDROID_STATUS_SUCCESS;
+void
+_svg_android_free_image_cache(void *closure, unsigned char *data) {
+	/* no image caching is done currently */
 }
 
 svg_status_t

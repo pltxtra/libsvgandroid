@@ -49,6 +49,8 @@ svg_render_engine_t SVG_ANDROID_RENDER_ENGINE = {
 	.arc_to = _svg_android_arc_to,
 	.close_path = _svg_android_close_path,
 	.free_path_cache = _svg_android_free_path_cache,
+	/* image cache */
+	.free_image_cache = _svg_android_free_image_cache,
 	/* style */
 	.set_color = _svg_android_set_color,
 	.set_fill_opacity = _svg_android_set_fill_opacity,
@@ -117,7 +119,7 @@ svg_android_t *svgAndroidCreate(void) {
 		svg_android->canvas = NULL;
 		svg_android->state = NULL;
 
-		if(svg_create (&(svg_android)->svg)) {
+		if(svg_create (&(svg_android)->svg, &SVG_ANDROID_RENDER_ENGINE, svg_android)) {
 			free(svg_android);
 			svg_android = NULL;
 		}
@@ -584,7 +586,7 @@ svg_status_t svgAndroidRender
 	_svg_android_push_state (svg_android, offscreen_bitmap, NULL);
 
 	svg_android->fit_to_area = 0;
-	svg_status_t return_status = svg_render (svg_android->svg, &SVG_ANDROID_RENDER_ENGINE, svg_android);
+	svg_status_t return_status = svg_render (svg_android->svg);
 
 	SVG_ANDROID_ERROR("svgAndroidRender() --> popping final state...\n");
 
@@ -622,7 +624,7 @@ svg_status_t svgAndroidRenderToArea(JNIEnv *env, svg_android_t *svg_android, job
 	svg_android->viewport_width = w;
 	svg_android->viewport_height = h;
 
-	svg_status_t return_status =  svg_render (svg_android->svg, &SVG_ANDROID_RENDER_ENGINE, svg_android);
+	svg_status_t return_status =  svg_render (svg_android->svg);
 
 	_svg_android_pop_state (svg_android);
 

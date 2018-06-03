@@ -438,8 +438,11 @@ _svg_path_arc_segment (svg_android_t *svg_android,
 svg_status_t
 _svg_android_close_path (void *closure);
 
-svg_status_t
+void
 _svg_android_free_path_cache(void *closure, void **path_cache);
+
+void
+_svg_android_free_image_cache(void *closure, unsigned char *data);
 
 svg_status_t
 _svg_android_set_color (void *closure, const svg_color_t *color);

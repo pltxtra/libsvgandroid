@@ -229,7 +229,7 @@ static int _svg_path_is_empty (svg_path_t *path) {
 }
 
 svg_status_t
-_svg_path_deinit (svg_path_t *path)
+_svg_path_deinit (svg_t *doc, svg_path_t *path)
 {
     svg_path_op_buf_t *op;
     svg_path_arg_buf_t *arg;
@@ -248,22 +248,10 @@ _svg_path_deinit (svg_path_t *path)
     }
     path->arg_tail = NULL;
 
+    if(path->cache && doc->engine)
+	    doc->engine->free_path_cache(doc->closure, path->cache);
+
     return SVG_STATUS_SUCCESS;
-}
-
-svg_status_t
-_svg_path_destroy (svg_render_engine_t *engine, void *closure, svg_path_t *path)
-{
-    svg_status_t status;
-
-    if(path->cache)
-	    engine->free_path_cache(closure, path->cache);
-
-    status = _svg_path_deinit (path);
-
-    free (path);
-
-    return status;
 }
 
 svg_status_t

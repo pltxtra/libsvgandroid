@@ -280,7 +280,7 @@ typedef struct svg_render_engine {
 			     double	x,
 			     double	y);
 	svg_status_t (* close_path) (void *closure);
-	svg_status_t (* free_path_cache) (void *closure, void **path_cache);
+	void (* free_path_cache) (void *closure, void **path_cache);
     /* style */
     svg_status_t (* set_color) (void *closure, const svg_color_t *color);
     svg_status_t (* set_fill_opacity) (void *closure, double fill_opacity);
@@ -372,6 +372,8 @@ typedef struct svg_render_engine {
 				  svg_length_t *x,
 				  svg_length_t *y,
 				  const char   *utf8);
+    void (* free_image_cache) (void *closure,
+			       unsigned char *data);
     svg_status_t (* render_image) (void		 *closure,
 				   unsigned char *data,
 				   unsigned int	 data_width,
@@ -387,7 +389,9 @@ typedef struct svg_render_engine {
 } svg_render_engine_t;
 
 svg_status_t
-svg_create (svg_t **svg);
+svg_create (svg_t **svg,
+	    svg_render_engine_t	*engine,
+	    void		*closure);
 
 	void svg_enable_path_cache(svg_t *svg);
 
@@ -423,9 +427,7 @@ svg_element_t *
 svg_event_coords_match(svg_t *svg, int x, int y);
 
 svg_status_t
-svg_render (svg_t		*svg,
-	    svg_render_engine_t	*engine,
-	    void		*closure);
+svg_render (svg_t		*svg);
 
 void
 svg_get_size (svg_t *svg,

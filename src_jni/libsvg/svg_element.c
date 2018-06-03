@@ -158,7 +158,7 @@ static void _svg_element_delete (svg_element_t *element)
 	    (void) _svg_group_deinit (&element->e.group);
 	break;
     case SVG_ELEMENT_TYPE_PATH:
-	    (void) _svg_path_deinit (&element->e.path);
+	    (void) _svg_path_deinit (element->doc, &element->e.path);
 	break;
     case SVG_ELEMENT_TYPE_CIRCLE:
     case SVG_ELEMENT_TYPE_ELLIPSE:
@@ -176,7 +176,7 @@ static void _svg_element_delete (svg_element_t *element)
 	    (void) _svg_pattern_deinit (&element->e.pattern);
 	break;
     case SVG_ELEMENT_TYPE_IMAGE:
-	    (void) _svg_image_deinit (&element->e.image);
+	    (void) _svg_image_deinit (element->doc, &element->e.image);
 	break;
     case SVG_ELEMENT_TYPE_FILTER:
 	    (void) _svg_filter_deinit (&element->e.filter);
