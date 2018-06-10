@@ -3,6 +3,20 @@
 PROJECT_NAME=libsvgandroid
 PROJECT_NAMESPACE=com.toolkits.libsvgandroid
 
+LIBJPEG_CHK="3a753ea48d917945dd54a2d97de388aa06ca2eb1066cbfdc6652036349fe05a7"
+LIBJPEG_SRC="jpegsrc.v9a.tar.gz"
+LIBJPEG_DIR="jpeg-9a"
+ZLIB_CHK="c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1"
+ZLIB_SRC="zlib-1.2.11.tar.gz"
+ZLIB_DIR="zlib-1.2.11"
+LIBPNG_CHK="574623a4901a9969080ab4a2df9437026c8a87150dfd5c235e28c94b212964a7"
+LIBPNG_SRC="libpng-1.6.34.tar.gz"
+LIBPNG_DIR="libpng-1.6.34"
+LIBEXPAT_CHK="823705472f816df21c8f6aa026dd162b280806838bb55b3432b0fb1fcca7eb86"
+LIBEXPAT_SRC="expat-2.1.0.tar.gz"
+LIBEXPAT_DIR="expat-2.1.0"
+
+
 function usage {
     echo
     echo "Configure script for $PROJECT_NAME"
@@ -20,7 +34,7 @@ function usage {
 }
 
 function run_checksum {
-    echo $1 | md5sum -c
+    echo $1 | sha256sum -c
     if [ $? -ne 0 ]; then
 	echo Checksum failed. Abort.
 	exit 1
@@ -52,15 +66,15 @@ function do_compile {
 }
 
 function do_libjpeg {
-    tar -xf jpegsrc.v9a.tar.gz
-    pushd jpeg-9a
+    tar -xf $LIBJPEG_SRC
+    pushd $LIBJPEG_DIR
     do_compile libjpeg
     popd
 }
 
 function do_zlib {
-    tar -xf zlib-1.2.8.tar.gz
-    pushd zlib-1.2.8
+    tar -xf $ZLIB_SRC
+    pushd $ZLIB_DIR
     ./configure --static --prefix=$TARGET_DIR
     if [ $? -ne 0 ]; then
 	fail zlib
@@ -77,15 +91,15 @@ function do_zlib {
 }
 
 function do_libpng {
-    tar -xf libpng-1.6.26.tar.xz
-    pushd libpng-1.6.26
+    tar -xf $LIBPNG_SRC
+    pushd $LIBPNG_DIR
     do_compile libpng
     popd
 }
 
 function do_expat {
-    tar -xf expat-2.1.0.tar.gz
-    pushd expat-2.1.0
+    tar -xf $LIBEXPAT_SRC
+    pushd $LIBEXPAT_DIR
     do_compile expat
     popd
 }
@@ -125,14 +139,14 @@ function do_bootstrap {
     export CXX=arm-linux-androideabi-g++
     export TARGET_DIR=$PWD
 
-    wget http://www.ijg.org/files/jpegsrc.v9a.tar.gz
-    run_checksum "3353992aecaee1805ef4109aadd433e7 ./jpegsrc.v9a.tar.gz"
-    wget http://zlib.net/zlib-1.2.8.tar.gz
-    run_checksum "44d667c142d7cda120332623eab69f40 ./zlib-1.2.8.tar.gz"
-    wget http://github.com/glennrp/libpng-releases/raw/master/libpng-1.6.26.tar.xz
-    run_checksum "faed9bb495d2e12dd0c9ec561ca60cd8 ./libpng-1.6.26.tar.xz"
-    wget 'http://downloads.sourceforge.net/project/expat/expat/2.1.0/expat-2.1.0.tar.gz'
-    run_checksum "dd7dab7a5fea97d2a6a43f511449b7cd ./expat-2.1.0.tar.gz"
+    wget http://www.ijg.org/files/$LIBJPEG_SRC
+    run_checksum "$LIBJPEG_CHK ./$LIBJPEG_SRC"
+    wget http://zlib.net/$ZLIB_SRC
+    run_checksum "$ZLIB_CHK ./$ZLIB_SRC"
+    wget http://github.com/glennrp/libpng-releases/raw/master/$LIBPNG_SRC
+    run_checksum "$LIBPNG_CHK ./$LIBPNG_SRC"
+    wget http://downloads.sourceforge.net/project/expat/expat/2.1.0/$LIBEXPAT_SRC
+    run_checksum "$LIBEXPAT_CHK ./$LIBEXPAT_SRC"
 
     do_libjpeg
     do_zlib

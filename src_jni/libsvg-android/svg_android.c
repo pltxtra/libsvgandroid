@@ -35,6 +35,23 @@
 
 #include "svg_android_debug.h"
 
+
+
+// Check GCC
+#if __GNUC__
+#if __x86_64__ || __ppc64__
+#define ENVIRONMENT64
+#else
+#define ENVIRONMENT32
+#endif
+#endif
+
+#ifndef ENVIRONMENT64
+#ifndef ENVIRONMENT32
+#error "Must define ENVIRONMENT64 or ENVIRONMENT32"
+#endif
+#endif
+
 svg_render_engine_t SVG_ANDROID_RENDER_ENGINE = {
 	/* hierarchy */
 	.begin_group = _svg_android_begin_group,
@@ -131,22 +148,35 @@ svg_android_t *svgAndroidCreate(void) {
 JNIEXPORT jlong JNICALL Java_com_toolkits_libsvgandroid_SvgRaster_svgAndroidCreate
 (JNIEnv * env, jclass jc)
 {
+#ifdef ENVIRONMENT64
 	return (jlong)svgAndroidCreate();
+#else
+	uint32_t t = (uint32_t)svgAndroidCreate();
+	return (jlong)t;
+#endif
 }
 
 JNIEXPORT jint JNICALL Java_com_toolkits_libsvgandroid_SvgRaster_svgAndroidDestroy
 (JNIEnv *env, jclass jc, jlong _svg_android_r)
 {
+#ifdef ENVIRONMENT64
 	svg_android_t *svg_android = (svg_android_t *)_svg_android_r;
-
+#else
+	uint32_t t = (uint32_t)_svg_android_r;
+	svg_android_t *svg_android = (svg_android_t *)t;
+#endif
 	return svgAndroidDestroy(svg_android);
 }
 
 JNIEXPORT jint JNICALL Java_com_toolkits_libsvgandroid_SvgRaster_svgAndroidParseBuffer
 (JNIEnv *env, jclass jc, jlong _svg_android_r, jstring _bfr)
 {
+#ifdef ENVIRONMENT64
 	svg_android_t *svg_android = (svg_android_t *)_svg_android_r;
-
+#else
+	uint32_t t = (uint32_t)_svg_android_r;
+	svg_android_t *svg_android = (svg_android_t *)t;
+#endif
 
 	const char *buf = (*env)->GetStringUTFChars(env, _bfr, JNI_FALSE);
 
@@ -160,14 +190,24 @@ JNIEXPORT jint JNICALL Java_com_toolkits_libsvgandroid_SvgRaster_svgAndroidParse
 JNIEXPORT jint JNICALL Java_com_toolkits_libsvgandroid_SvgRaster_svgAndroidParseChunkBegin
 (JNIEnv *env, jclass jc, jlong _svg_android_r)
 {
+#ifdef ENVIRONMENT64
 	svg_android_t *svg_android = (svg_android_t *)_svg_android_r;
+#else
+	uint32_t t = (uint32_t)_svg_android_r;
+	svg_android_t *svg_android = (svg_android_t *)t;
+#endif
 	return svg_parse_chunk_begin (svg_android->svg);
 }
 
 JNIEXPORT jint JNICALL Java_com_toolkits_libsvgandroid_SvgRaster_svgAndroidParseChunk
 (JNIEnv *env, jclass jc, jlong _svg_android_r, jstring _bfr)
 {
+#ifdef ENVIRONMENT64
 	svg_android_t *svg_android = (svg_android_t *)_svg_android_r;
+#else
+	uint32_t t = (uint32_t)_svg_android_r;
+	svg_android_t *svg_android = (svg_android_t *)t;
+#endif
 
 	const char *buf = (*env)->GetStringUTFChars(env, _bfr, JNI_FALSE);
 
@@ -181,7 +221,12 @@ JNIEXPORT jint JNICALL Java_com_toolkits_libsvgandroid_SvgRaster_svgAndroidParse
 JNIEXPORT jint JNICALL Java_com_toolkits_libsvgandroid_SvgRaster_svgAndroidParseChunkEnd
 (JNIEnv *env, jclass jc, jlong _svg_android_r)
 {
+#ifdef ENVIRONMENT64
 	svg_android_t *svg_android = (svg_android_t *)_svg_android_r;
+#else
+	uint32_t t = (uint32_t)_svg_android_r;
+	svg_android_t *svg_android = (svg_android_t *)t;
+#endif
 	return svg_parse_chunk_end (svg_android->svg);
 }
 
@@ -558,7 +603,12 @@ void svgAndroidSetAntialiasing(svg_android_t *svg_android, jboolean doAntiAlias)
 
 JNIEXPORT int JNICALL Java_com_toolkits_libsvgandroid_SvgRaster_svgAndroidSetAntialiasing
 (JNIEnv *env, jclass jc, jlong _svg_android_r, jboolean doAntiAlias) {
+#ifdef ENVIRONMENT64
 	svg_android_t *svg_android = (svg_android_t *)_svg_android_r;
+#else
+	uint32_t t = (uint32_t)_svg_android_r;
+	svg_android_t *svg_android = (svg_android_t *)t;
+#endif
 	svg_android->do_antialias = doAntiAlias;
 	return 0;
 }
@@ -605,7 +655,12 @@ svg_status_t svgAndroidRender
 JNIEXPORT jint JNICALL Java_com_toolkits_libsvgandroid_SvgRaster_svgAndroidRender
 (JNIEnv *env, jclass jc, jlong _svg_android_r, jobject android_canvas)
 {
+#ifdef ENVIRONMENT64
 	svg_android_t *svg_android = (svg_android_t *)_svg_android_r;
+#else
+	uint32_t t = (uint32_t)_svg_android_r;
+	svg_android_t *svg_android = (svg_android_t *)t;
+#endif
 	return svgAndroidRender(env, svg_android, android_canvas);
 }
 
@@ -635,7 +690,12 @@ JNIEXPORT jint JNICALL Java_com_toolkits_libsvgandroid_SvgRaster_svgAndroidRende
 (JNIEnv *env, jclass jc, jlong _svg_android_r, jobject android_canvas,
  jint x, jint y, jint w, jint h)
 {
+#ifdef ENVIRONMENT64
 	svg_android_t *svg_android = (svg_android_t *)_svg_android_r;
+#else
+	uint32_t t = (uint32_t)_svg_android_r;
+	svg_android_t *svg_android = (svg_android_t *)t;
+#endif
 	return svgAndroidRenderToArea(env, svg_android, android_canvas, x, y, w, h);
 }
 
