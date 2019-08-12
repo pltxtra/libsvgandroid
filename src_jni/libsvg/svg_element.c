@@ -246,7 +246,10 @@ svg_element_render (svg_element_t		*element,
 	return status;
 
     /* event handling */
-    if(element->do_events) {
+    if(
+	    element->do_events &&
+	    (element->style.flags & SVG_STYLE_FLAG_DISPLAY)
+	    ) {
 	    element->next_event = element->doc->event_stack;
 	    element->doc->event_stack = element;
     }
