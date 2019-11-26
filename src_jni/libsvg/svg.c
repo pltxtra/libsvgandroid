@@ -210,22 +210,34 @@ svg_parse_buffer_and_inject (svg_t *svg, svg_element_t *parent, const char *buf,
 	   (parent->type == SVG_ELEMENT_TYPE_GROUP)) {
 
 		status = _svg_parser_begin (&svg->parser);
-		if (status)
+		if (status) {
+			SVG_ERROR("inject failed when starting the svg parser.\n");
 			return status;
+		}
 
 		status = _svg_parser_spoof_state(&svg->parser, parent);
-		if(status)
+		if(status) {
+			SVG_ERROR("inject failed when spoofing intermediate svg parser state.\n");
 			return status;
+		}
 
 		status = _svg_parser_parse_chunk (&svg->parser, buf, count);
+		if (status) {
+			SVG_ERROR("inject failed when parsing svg sub chunk.\n");
+		}
 
 		status = _svg_parser_unspoof_state(&svg->parser);
-
-		if (status)
+		if (status) {
+			SVG_ERROR("inject failed when unspoofing intermediate svg parser state.\n");
 			return status;
+		}
 
 		status = _svg_parser_end (&svg->parser);
+		if (status) {
+			SVG_ERROR("inject failed when ending svg parser sub chunk.\n");
+		}
 	} else {
+		SVG_ERROR("Trying to inject when parent is not a group type element.\n");
 		status = SVG_STATUS_INVALID_CALL;
 	}
 
@@ -286,7 +298,7 @@ svg_element_t *
 svg_event_coords_match(svg_t *svg, int x, int y) {
 	svg_element_t *current = svg->event_stack;
 
-	SVG_DEBUG("----> event_coords_match (%d, %d)\n", x, y);
+	SVG_DEBUG("----> event_coords_match for doc %p (%d, %d)\n", svg, x, y);
 	while(current != NULL) {
 		SVG_DEBUG("     current (%p) (%d, %d) -> (%d, %d)\n",
 			  current,
@@ -296,7 +308,16 @@ svg_event_coords_match(svg_t *svg, int x, int y) {
 		   x < current->bounding_box.right &&
 		   y > current->bounding_box.top &&
 		   y < current->bounding_box.bottom) {
-			SVG_DEBUG("  coords matched to %p.\n", current);
+			SVG_DEBUG("  coords matched to %p (%s).\n",
+				  current,
+				  current->id ? current->id : "<no id>");
+			int l;
+			if(current->classes) {
+				for(l = 0; current->classes[l] != NULL; l++) {
+					SVG_DEBUG("  --> coords matched to class %s.\n",
+						  current->classes[l]);
+				}
+			}
 			return current;
 		}
 		current = current->next_event;

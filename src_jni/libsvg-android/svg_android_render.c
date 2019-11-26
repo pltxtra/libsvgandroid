@@ -81,7 +81,7 @@ _svg_android_set_viewport_dimension (void *closure,
 	_svg_android_length_to_pixel (svg_android, width, &vwidth);
 	_svg_android_length_to_pixel (svg_android, height, &vheight);
 
-	SVG_ANDROID_ERROR("_svg_android_set_viewpoert_dimension(%f, %f)\n",
+	SVG_ANDROID_DEBUG("_svg_android_set_viewpoert_dimension(%f, %f)\n",
 			  vwidth, vheight);
 
 	svg_android->state->viewport_width  = vwidth;

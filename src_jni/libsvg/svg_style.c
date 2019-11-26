@@ -928,17 +928,17 @@ _svg_style_render (svg_style_t		*style,
     if (style->flags & SVG_STYLE_FLAG_FILTER) {
 	const char* flt = "inherit";
 
-	SVG_ERROR("_svg_style_render(FILTER) - %p\n", style->filter_element);
+	SVG_DEBUG("_svg_style_render(FILTER) - %p\n", style->filter_element);
 
 	if(style->filter_element) {
-	    SVG_ERROR("_svg_style_render(FILTER) - %s\n", style->filter_element->id);
+	    SVG_DEBUG("_svg_style_render(FILTER) - %s\n", style->filter_element->id);
 	    status = _svg_filter_render (&(style->filter_element->e.filter), engine, closure);
-	    SVG_ERROR("_svg_style_render(FILTER) - status %d\n", status);
+	    SVG_DEBUG("_svg_style_render(FILTER) - status %d\n", status);
 	    if (status)
 		return status;
 	    flt = style->filter_element->id;
 	}
-	SVG_ERROR("_svg_style_render(FILTER) - flt %s\n", flt);
+	SVG_DEBUG("_svg_style_render(FILTER) - flt %s\n", flt);
 
 	status = (engine->set_filter) (closure, flt);
 	if (status)
