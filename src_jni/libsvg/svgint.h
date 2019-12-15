@@ -241,6 +241,8 @@ struct svg_group {
 };
 
 typedef struct svg_text {
+    struct svg_group group_data;
+
     svg_length_t x;
     svg_length_t y;
     char *chars;
@@ -361,7 +363,8 @@ typedef struct svg_parser_state {
     const svg_parser_cb_t	*cb;
     svg_element_t		*group_element;
     svg_element_t		*filter_element;
-    svg_text_t			*text;
+    svg_element_t		*text_element;
+    svg_element_t		*tspan_element;
 
     struct svg_parser_state	*next;
 } svg_parser_state_t;

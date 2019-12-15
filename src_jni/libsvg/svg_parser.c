@@ -28,6 +28,8 @@
 
 #include "svgint.h"
 #include "svg_parser.h"
+
+#define __DO_SVG_DEBUG
 #include "svg_debug.h"
 
 static svg_status_t
@@ -108,6 +110,11 @@ _svg_parser_parse_text (svg_parser_t	*parser,
 			svg_element_t	**text_element);
 
 static svg_status_t
+_svg_parser_parse_tspan (svg_parser_t	*parser,
+			 const char	**attributes,
+			 svg_element_t	**tspan_element);
+
+static svg_status_t
 _svg_parser_parse_image (svg_parser_t	*parser,
 			 const char	**attributes,
 			 svg_element_t	**image_element);
@@ -158,6 +165,8 @@ static const svg_parser_map_t SVG_PARSER_MAP[] = {
     {"polyline",	{_svg_parser_parse_polyline,		NULL }},
     {"text",		{_svg_parser_parse_text,
 			 _svg_parser_parse_text_characters }},
+    {"tspan",		{_svg_parser_parse_tspan,
+			 _svg_parser_parse_text_characters }},
     {"image",		{_svg_parser_parse_image,		NULL }},
     {"linearGradient",	{_svg_parser_parse_linear_gradient,	NULL }},
     {"radialGradient",	{_svg_parser_parse_radial_gradient,	NULL }},
@@ -195,8 +204,11 @@ _svg_parser_sax_start_element (void		*closure,
     const char *name = (const char *) name_unsigned;
     const char **attributes = (const char **) attributes_unsigned;
 
+    SVG_DEBUG("_svg_parser_sax_start_element: A\n");
+
     if (parser->unknown_element_depth) {
 	parser->unknown_element_depth++;
+	SVG_DEBUG("_svg_parser_sax_start_element: B\n");
 	return;
     }
 
@@ -210,27 +222,34 @@ _svg_parser_sax_start_element (void		*closure,
 
     if (cb == NULL) {
 	parser->unknown_element_depth++;
+	SVG_DEBUG("_svg_parser_sax_start_element: C\n");
 	return;
     }
 
     parser->status = _svg_parser_push_state (parser, cb);
-    if (parser->status)
+    if (parser->status) {
+	    SVG_DEBUG("_svg_parser_sax_start_element: D\n");
 	return;
+    }
 
     parser->status = (cb->parse_element) (parser, attributes, &element);
     if (parser->status) {
 	if (parser->status == SVGINT_STATUS_UNKNOWN_ELEMENT)
 	    parser->status = SVG_STATUS_SUCCESS;
+	SVG_DEBUG("_svg_parser_sax_start_element: E\n");
 	return;
     }
 
     parser->status = _svg_element_apply_attributes (element, attributes);
-    if (parser->status)
+    if (parser->status) {
+	    SVG_DEBUG("_svg_parser_sax_start_element: F\n");
 	return;
+    }
 
     if (element->id)
 	_svg_store_element_by_id (parser->svg, element);
 
+    SVG_DEBUG("_svg_parser_sax_start_element: G\n");
     return;
 }
 
@@ -240,12 +259,15 @@ _svg_parser_sax_end_element (void		*closure,
 {
     svg_parser_t *parser = closure;
 
+    SVG_DEBUG("_svg_parser_sax_end_element: A\n");
     if (parser->unknown_element_depth) {
 	parser->unknown_element_depth--;
 	return;
     }
 
+    SVG_DEBUG("_svg_parser_sax_end_element: B\n");
     parser->status = _svg_parser_pop_state (parser);
+    SVG_DEBUG("_svg_parser_sax_end_element: C\n");
     if (parser->status)
 	return;
 
@@ -354,7 +376,8 @@ _svg_parser_push_state (svg_parser_t		*parser,
 	*state = *parser->state;
     } else {
 	state->group_element = NULL;
-	state->text = NULL;
+	state->text_element = NULL;
+	state->tspan_element = NULL;
     }
 
     state->cb = cb;
@@ -375,6 +398,8 @@ _svg_parser_pop_state (svg_parser_t *parser)
 
     old = parser->state;
     parser->state = parser->state->next;
+    if(parser->state)
+	    parser->state->tspan_element = NULL;
     free(old);
 
     return SVG_STATUS_SUCCESS;
@@ -673,6 +698,7 @@ _svg_parser_parse_text (svg_parser_t	*parser,
 			const char	**attributes,
 			svg_element_t	**text_element)
 {
+    SVG_DEBUG("_svg_parser_parse_text: enter...\n");
     svg_status_t status;
 
     status = _svg_parser_new_leaf_element (parser,
@@ -681,7 +707,45 @@ _svg_parser_parse_text (svg_parser_t	*parser,
     if (status)
 	return status;
 
-    parser->state->text = &(*text_element)->e.text;
+    SVG_DEBUG("_svg_parser_parse_text: will init group... %p\n", &(*text_element)->e.group);
+
+    /* To support tspans we've added group data to the top of svg_text */
+    status = _svg_group_init (&(*text_element)->e.group);
+    if (status)
+        return status;
+
+    SVG_DEBUG("_svg_parser_parse_text: group initialized...\n");
+
+    parser->state->text_element = *text_element;
+    parser->state->tspan_element = NULL;
+
+    return SVG_STATUS_SUCCESS;
+}
+
+static svg_status_t
+_svg_parser_parse_tspan (svg_parser_t	*parser,
+			 const char	**attributes,
+			 svg_element_t	**tspan_element)
+{
+    SVG_DEBUG("_svg_parser_parse_tspan: enter...\n");
+    svg_status_t status;
+    if (parser->state->text_element == NULL)
+	    return SVG_STATUS_PARSE_ERROR;
+
+    status = _svg_element_create (tspan_element, SVG_ELEMENT_TYPE_TEXT,
+				  parser->state->text_element,
+				  parser->svg);
+    if (status)
+	return status;
+
+    SVG_DEBUG("_svg_parser_parse_tspan: will add to group... %p\n", &parser->state->text_element->e.group);
+    status = _svg_group_add_element (&parser->state->text_element->e.group,
+				     *tspan_element);
+    if (status)
+	return status;
+    SVG_DEBUG("_svg_parser_parse_tspan: added to group...\n");
+
+    parser->state->tspan_element = *tspan_element;
 
     return SVG_STATUS_SUCCESS;
 }
@@ -821,14 +885,21 @@ _svg_parser_parse_text_characters (svg_parser_t		*parser,
 				   const char	*ch,
 				   int			len)
 {
+	SVG_DEBUG("_svg_parser_text_characters: %p ---\n", parser->state->tspan_element);
+    SVG_DEBUG("_svg_parser_text_characters: %s\n", ch);
     svg_status_t status;
     svg_text_t *text;
 
-    text = parser->state->text;
+    if(parser->state->tspan_element)
+	    text = &(parser->state->tspan_element)->e.text;
+    else
+	    text = &(parser->state->text_element)->e.text;
     if (text == NULL)
 	return SVG_STATUS_PARSE_ERROR;
 
+    SVG_DEBUG("_svg_parser_text_characters: appending\n");
     status = _svg_text_append_chars (text, ch, len);
+    SVG_DEBUG("_svg_parser_text_characters: completed appending\n");
 
     return status;
 }

@@ -168,6 +168,7 @@ static void _svg_element_delete (svg_element_t *element)
 	break;
     case SVG_ELEMENT_TYPE_TEXT:
 	    (void) _svg_text_deinit (&element->e.text);
+	    (void) _svg_group_deinit (&element->e.group);
 	break;
     case SVG_ELEMENT_TYPE_GRADIENT:
 	    (void) _svg_gradient_deinit (&element->e.gradient);

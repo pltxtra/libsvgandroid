@@ -464,13 +464,13 @@ static svg_status_t
 _svg_style_parse_image_rendering (svg_style_t *style, const char *str)
 {
 	if (strcmp (str,  "optimizeSpeed") == 0)
-		style->image_rendering == SVG_IMAGERENDER_SPEED;
+		style->image_rendering = SVG_IMAGERENDER_SPEED;
 	else if (strcmp (str,  "optimizeQuality") == 0)
-		style->image_rendering == SVG_IMAGERENDER_QUALITY;
+		style->image_rendering = SVG_IMAGERENDER_QUALITY;
 	else if (strcmp (str,  "inherit") == 0)
-		style->image_rendering == SVG_IMAGERENDER_INHERIT;
+		style->image_rendering = SVG_IMAGERENDER_INHERIT;
 	else
-		style->image_rendering == SVG_IMAGERENDER_AUTO;
+		style->image_rendering = SVG_IMAGERENDER_AUTO;
 
 	style->flags |= SVG_STYLE_FLAG_IMAGE_RENDERING;
 
