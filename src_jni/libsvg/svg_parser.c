@@ -29,7 +29,7 @@
 #include "svgint.h"
 #include "svg_parser.h"
 
-#define __DO_SVG_DEBUG
+//#define __DO_SVG_DEBUG
 #include "svg_debug.h"
 
 static svg_status_t
