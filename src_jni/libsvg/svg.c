@@ -386,6 +386,7 @@ _svg_fetch_element_by_class (svg_t *svg, const char *class_id, svg_element_t *el
 	switch(element->type) {
 	case SVG_ELEMENT_TYPE_SVG_GROUP:
 	case SVG_ELEMENT_TYPE_GROUP:
+	case SVG_ELEMENT_TYPE_TEXT:
 	{
 		int k;
 		for(k = 0; k < element->e.group.num_elements; k++) {
@@ -414,7 +415,6 @@ _svg_fetch_element_by_class (svg_t *svg, const char *class_id, svg_element_t *el
 	case SVG_ELEMENT_TYPE_ELLIPSE:
 	case SVG_ELEMENT_TYPE_LINE:
 	case SVG_ELEMENT_TYPE_RECT:
-	case SVG_ELEMENT_TYPE_TEXT:
 	case SVG_ELEMENT_TYPE_GRADIENT:
 	case SVG_ELEMENT_TYPE_GRADIENT_STOP:
 	case SVG_ELEMENT_TYPE_PATTERN:

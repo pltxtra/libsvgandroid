@@ -802,6 +802,7 @@ svg_status_t _svg_element_init_copy (
 		break;
 	case SVG_ELEMENT_TYPE_TEXT:
 		status = _svg_text_init_copy (&element->e.text, &other->e.text);
+		status = _svg_group_init_copy (&element->e.group, &other->e.group);
 		break;
 	case SVG_ELEMENT_TYPE_GRADIENT:
 		status = _svg_gradient_init_copy (&element->e.gradient, &other->e.gradient);
