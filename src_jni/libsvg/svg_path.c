@@ -248,8 +248,10 @@ _svg_path_deinit (svg_t *doc, svg_path_t *path)
     }
     path->arg_tail = NULL;
 
-    if(path->cache && doc->engine)
-	    doc->engine->free_path_cache(doc->closure, path->cache);
+    if(path->cache && doc->engine) {
+	    doc->engine->free_path_cache(doc->closure, &(path->cache));
+	    path->cache = NULL;
+    }
 
     return SVG_STATUS_SUCCESS;
 }
