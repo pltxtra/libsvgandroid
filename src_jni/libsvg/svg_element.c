@@ -218,7 +218,7 @@ _svg_element_get_viewport(svg_element_t *element,
 		||
 		(element->type == SVG_ELEMENT_TYPE_SVG_GROUP)
 		) {
-		SVG_ERROR("get_viewport, element %s, %f, %f -> %f, %f\n",
+		SVG_DEBUG("get_viewport, element %s, %f, %f -> %f, %f\n",
 			  element->id,
 			  element->e.group.x.value,
 			  element->e.group.x.value,
