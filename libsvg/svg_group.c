@@ -1,26 +1,27 @@
 /* svg_group.c: Data structures for SVG group elements
- 
+
    Copyright © 2002 USC/Information Sciences Institute
-  
+
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public License as
    published by the Free Software Foundation; either version 2 of the
    License, or (at your option) any later version.
-  
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
    Library General Public License for more details.
-  
+
    You should have received a copy of the GNU Library General Public
    License along with this program; if not, write to the
    Free Software Foundation, Inc., 59 Temple Place - Suite 330,
    Boston, MA 02111-1307, USA.
-  
+
    Author: Carl Worth <cworth@isi.edu>
 */
 
 #include "svgint.h"
+#include <stddef.h>
 
 //#define __DO_SVG_DEBUG
 #include "svg_debug.h"
@@ -55,7 +56,7 @@ _svg_group_deinit (svg_group_t *group)
 	    group->element[i]->parent = NULL;
 	    _svg_element_dereference (group->element[i]);
     }
-    
+
     free (group->element);
     group->element = NULL;
     group->num_elements = 0;
@@ -80,7 +81,7 @@ _svg_group_add_element (svg_group_t *group, svg_element_t *element)
     group->num_elements++;
 
     _svg_element_reference(element);
-    
+
     return SVG_STATUS_SUCCESS;
 }
 
@@ -92,17 +93,17 @@ _svg_group_drop_element (svg_group_t *group, svg_element_t *element) {
 			  group, group->num_elements);
 		exit(0);
 	}
-	
+
 	SVG_DEBUG(" will scan for %p in %d number of elements....\n", element, group->num_elements);
 	for(k = 0; k < group->num_elements; k++) {
 		SVG_DEBUG("   compare: %p == %p ?\n", group->element[k], element);
-		
+
 		if(group->element[k] == element) {
 			SVG_DEBUG("   matched! will dereference %p\n", element);
 			_svg_element_dereference(element);
 
 			element->parent = NULL;
-			
+
 			group->num_elements--;
 
 			for(; k < group->num_elements; k++) {
@@ -125,7 +126,7 @@ svg_status_t _svg_group_init_copy (svg_group_t *group,
 	group->element = NULL;
 	group->num_elements = 0;
 	group->element_size = 0;
-	
+
 	/* clone children */
 	for (i=0; i < other->num_elements; i++) {
 		status = _svg_element_clone (NULL, &clone, other->element[i]);
@@ -139,15 +140,15 @@ svg_status_t _svg_group_init_copy (svg_group_t *group,
 		svg_element_t *group_e = container_of(group, svg_element_t, e.group);
 		clone->parent = group_e;
 	}
-	
+
 	group->width  = other->width;
 	group->height = other->height;
-	
+
 	group->view_box = other->view_box;
-	
+
 	group->x = other->x;
 	group->y = other->y;
-	
+
 	return SVG_STATUS_SUCCESS;
 }
 
@@ -249,7 +250,7 @@ _svg_group_apply_use_attributes (svg_element_t		*group,
 
     clone = ref;
     _svg_element_reference(ref);
-    
+
     if (status)
 	return status;
     if (clone)

@@ -33,8 +33,6 @@
 
 #include "svgint.h"
 
-#include <android/log.h>
-
 static svg_status_t
 _svg_init (svg_t *svg,
 	   svg_render_engine_t	*engine,
